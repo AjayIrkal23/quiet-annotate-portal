@@ -63,4 +63,13 @@
   .bg-gray-750 {
     background-color: #374151;
   }
+
+  @keyframes expandWidth {
+    from {
+      width: 0%;
+    }
+    to {
+      width: 75%;
+    }
+  }
 }
