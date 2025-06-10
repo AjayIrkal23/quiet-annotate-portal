@@ -11,7 +11,6 @@ import Upload from "./pages/Upload";
 import Annotation from "./pages/Annotation";
 import Leaderboard from "./pages/Leaderboard";
 import Navbar from "./components/Navbar";
-import Navigation from "./components/Navigation";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -23,20 +22,17 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <div className="min-h-screen bg-gray-900 flex w-full">
-            <Navigation />
-            <div className="flex-1 flex flex-col">
-              <Navbar />
-              <main className="flex-1">
-                <Routes>
-                  <Route path="/" element={<Dashboard />} />
-                  <Route path="/upload" element={<Upload />} />
-                  <Route path="/annotation" element={<Annotation />} />
-                  <Route path="/leaderboard" element={<Leaderboard />} />
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </main>
-            </div>
+          <div className="min-h-screen bg-gray-900 w-full">
+            <Navbar />
+            <main className="w-full">
+              <Routes>
+                <Route path="/" element={<Dashboard />} />
+                <Route path="/upload" element={<Upload />} />
+                <Route path="/annotation" element={<Annotation />} />
+                <Route path="/leaderboard" element={<Leaderboard />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </main>
           </div>
         </BrowserRouter>
       </TooltipProvider>
