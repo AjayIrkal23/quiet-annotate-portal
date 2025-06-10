@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Upload as UploadIcon, CheckCircle, XCircle } from 'lucide-react';
+import { Upload as UploadIcon, CheckCircle, XCircle, FileImage, Zap, TrendingUp } from 'lucide-react';
 import ProgressRing from '../components/ProgressRing';
 
 interface UploadStats {
@@ -48,12 +48,11 @@ const Upload = () => {
       progress: 0,
     });
 
-    // Simulate upload progress
     let uploaded = 0;
     let failed = 0;
 
     const uploadInterval = setInterval(() => {
-      const shouldFail = Math.random() < 0.1; // 10% chance of failure
+      const shouldFail = Math.random() < 0.1;
       
       if (shouldFail) {
         failed++;
@@ -78,30 +77,43 @@ const Upload = () => {
   };
 
   return (
-    <div className="p-6">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-white mb-2">Image Upload</h1>
-        <p className="text-gray-400">Upload images for annotation and verification</p>
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-6">
+      {/* Header Section */}
+      <div className="mb-8 animate-fade-in">
+        <div className="flex items-center space-x-3 mb-2">
+          <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-blue-600 rounded-lg flex items-center justify-center">
+            <UploadIcon className="w-5 h-5 text-white" />
+          </div>
+          <h1 className="font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent text-2xl">
+            Upload Center
+          </h1>
+        </div>
+        <p className="text-gray-400 font-medium text-sm">
+          Upload and process images for AI-powered annotation and verification
+        </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div>
+        {/* Upload Area */}
+        <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-8 border border-gray-700/50 shadow-2xl animate-fade-in" style={{ animationDelay: '100ms' }}>
           <div
-            className={`border-2 border-dashed rounded-lg p-12 text-center transition-colors ${
+            className={`border-2 border-dashed rounded-xl p-12 text-center transition-all duration-300 ${
               isDragging
-                ? 'border-blue-500 bg-blue-500/10'
-                : 'border-gray-600 hover:border-gray-500'
+                ? 'border-blue-500 bg-blue-500/10 transform scale-105'
+                : 'border-gray-600 hover:border-gray-500 hover:bg-gray-700/20'
             }`}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
           >
-            <UploadIcon className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-            <h3 className="text-lg font-medium text-white mb-2">
+            <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-6">
+              <FileImage className="w-8 h-8 text-white" />
+            </div>
+            <h3 className="text-xl font-bold text-white mb-3">
               Drop files here or click to browse
             </h3>
-            <p className="text-gray-400 text-sm">
-              Supports JPG, PNG, and WebP formats
+            <p className="text-gray-400 text-sm mb-6">
+              Supports JPG, PNG, and WebP formats • Max 10MB per file
             </p>
             <input
               type="file"
@@ -113,53 +125,106 @@ const Upload = () => {
             />
             <label
               htmlFor="file-upload"
-              className="mt-4 inline-block bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg cursor-pointer transition-colors"
+              className="inline-flex items-center space-x-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-3 rounded-lg cursor-pointer transition-all duration-200 transform hover:scale-105 font-medium"
             >
-              Select Files
+              <UploadIcon className="w-4 h-4" />
+              <span>Select Files</span>
             </label>
           </div>
         </div>
 
-        <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
-          <h3 className="text-lg font-semibold text-white mb-6">Upload Status</h3>
+        {/* Upload Status */}
+        <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-8 border border-gray-700/50 shadow-2xl animate-fade-in" style={{ animationDelay: '200ms' }}>
+          <div className="flex items-center space-x-3 mb-6">
+            <div className="w-6 h-6 bg-gradient-to-r from-green-500 to-teal-500 rounded-md"></div>
+            <h3 className="text-xl font-bold text-white">Upload Status</h3>
+          </div>
           
           {isUploading && (
-            <div className="flex items-center justify-center mb-6">
-              <ProgressRing progress={uploadStats.progress} size={80} strokeWidth={4} />
+            <div className="flex items-center justify-center mb-8">
+              <ProgressRing progress={uploadStats.progress} size={100} strokeWidth={6} />
             </div>
           )}
 
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-gray-300">Total Files</span>
-              <span className="text-white font-medium">{uploadStats.total}</span>
+          <div className="space-y-6">
+            <div className="bg-gray-700/30 rounded-xl p-4">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center space-x-2">
+                  <FileImage className="w-4 h-4 text-blue-400" />
+                  <span className="text-gray-300 font-medium">Total Files</span>
+                </div>
+                <span className="text-white font-bold text-lg">{uploadStats.total}</span>
+              </div>
             </div>
             
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <CheckCircle className="h-4 w-4 text-green-400" />
-                <span className="text-gray-300">Uploaded</span>
+            <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-4">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center space-x-2">
+                  <CheckCircle className="w-4 h-4 text-green-400" />
+                  <span className="text-gray-300 font-medium">Uploaded</span>
+                </div>
+                <span className="text-green-400 font-bold text-lg">{uploadStats.uploaded}</span>
               </div>
-              <span className="text-green-400 font-medium">{uploadStats.uploaded}</span>
             </div>
             
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <XCircle className="h-4 w-4 text-red-400" />
-                <span className="text-gray-300">Failed</span>
+            <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center space-x-2">
+                  <XCircle className="w-4 h-4 text-red-400" />
+                  <span className="text-gray-300 font-medium">Failed</span>
+                </div>
+                <span className="text-red-400 font-bold text-lg">{uploadStats.failed}</span>
               </div>
-              <span className="text-red-400 font-medium">{uploadStats.failed}</span>
             </div>
           </div>
 
           {isUploading && (
-            <div className="mt-6 text-center">
-              <div className="inline-flex items-center space-x-2">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
-                <span className="text-gray-300 text-sm">Processing files...</span>
+            <div className="mt-8 text-center">
+              <div className="inline-flex items-center space-x-3 bg-blue-500/10 border border-blue-500/20 rounded-xl px-6 py-3">
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-500"></div>
+                <span className="text-blue-400 font-medium">Processing files...</span>
               </div>
             </div>
           )}
+        </div>
+      </div>
+
+      {/* Quick Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+        <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/50 shadow-2xl animate-fade-in" style={{ animationDelay: '300ms' }}>
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg flex items-center justify-center">
+              <Zap className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-white">2.3s</p>
+              <p className="text-gray-400 text-sm">Avg Processing Time</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/50 shadow-2xl animate-fade-in" style={{ animationDelay: '400ms' }}>
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg flex items-center justify-center">
+              <CheckCircle className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-white">98.5%</p>
+              <p className="text-gray-400 text-sm">Success Rate</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/50 shadow-2xl animate-fade-in" style={{ animationDelay: '500ms' }}>
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
+              <TrendingUp className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-white">1,247</p>
+              <p className="text-gray-400 text-sm">Files Today</p>
+            </div>
+          </div>
         </div>
       </div>
     </div>

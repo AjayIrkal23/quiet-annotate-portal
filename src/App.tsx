@@ -10,7 +10,6 @@ import Dashboard from "./pages/Dashboard";
 import Upload from "./pages/Upload";
 import Annotation from "./pages/Annotation";
 import Leaderboard from "./pages/Leaderboard";
-import Navbar from "./components/Navbar";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -22,8 +21,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <div className="min-h-screen bg-gray-900 w-full">
-            <Navbar />
+          <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 w-full">
             <main className="w-full">
               <Routes>
                 <Route path="/" element={<Dashboard />} />
