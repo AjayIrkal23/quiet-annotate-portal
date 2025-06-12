@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Upload, Image, Trophy, ImageIcon } from 'lucide-react';
+import { Home, Upload, Image, Trophy } from 'lucide-react';
 
 const Navigation = () => {
   const location = useLocation();
@@ -14,45 +14,28 @@ const Navigation = () => {
   ];
 
   return (
-    <nav className="bg-gray-900/95 backdrop-blur-sm border-r border-gray-700/50 w-64 min-h-screen p-6 flex-shrink-0">
-      {/* Logo */}
-      <div className="flex items-center space-x-3 mb-8">
-        <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-600 rounded-lg flex items-center justify-center">
-          <ImageIcon className="w-5 h-5 text-white" />
-        </div>
-        <div>
-          <h1 className="font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent text-xl">
-            AnnotateAI
-          </h1>
-          <p className="text-gray-400 text-xs">Annotation Studio</p>
-        </div>
-      </div>
-
+    <nav className="bg-gray-900/95 backdrop-blur-sm border-r border-gray-700/50 w-16 min-h-screen p-3 flex-shrink-0">
       {/* Navigation Items */}
-      <div className="space-y-2">
+      <div className="space-y-3 mt-6">
         {navItems.map(({ path, icon: Icon, label }) => (
           <Link
             key={path}
             to={path}
-            className={`flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 ${
+            className={`group relative flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-200 ${
               location.pathname === path
-                ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg transform scale-105'
-                : 'text-gray-300 hover:bg-gray-800/50 hover:text-white hover:scale-105'
+                ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg'
+                : 'text-gray-300 hover:bg-gray-800/50 hover:text-white'
             }`}
+            title={label}
           >
             <Icon size={20} />
-            <span className="font-medium">{label}</span>
+            
+            {/* Hover tooltip */}
+            <div className="absolute left-full ml-2 px-2 py-1 bg-gray-800 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+              {label}
+            </div>
           </Link>
         ))}
-      </div>
-
-      {/* Footer */}
-      <div className="absolute bottom-6 left-6 right-6">
-        <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700/50">
-          <p className="text-gray-400 text-xs text-center">
-            Powered by AI
-          </p>
-        </div>
       </div>
     </nav>
   );

@@ -28,10 +28,10 @@ const defaultIssues: Issue[] = [
 
 // Dummy images for annotation
 const dummyImages = [
-  'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=800&h=600&fit=crop',
-  'https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=800&h=600&fit=crop',
-  'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop',
-  'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=800&h=600&fit=crop'
+  'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=1200&h=800&fit=crop',
+  'https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=1200&h=800&fit=crop',
+  'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1200&h=800&fit=crop',
+  'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1200&h=800&fit=crop'
 ];
 
 const Annotation = () => {
@@ -46,9 +46,20 @@ const Annotation = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
 
-  // Fixed dimensions for normalization
-  const IMAGE_WIDTH = 800;
-  const IMAGE_HEIGHT = 600;
+  // Responsive dimensions - larger for bigger screens
+  const getImageDimensions = () => {
+    if (window.innerWidth >= 1536) { // 2xl screens
+      return { width: 1000, height: 700 };
+    } else if (window.innerWidth >= 1280) { // xl screens
+      return { width: 900, height: 650 };
+    } else if (window.innerWidth >= 1024) { // lg screens
+      return { width: 800, height: 600 };
+    } else {
+      return { width: 700, height: 500 }; // default
+    }
+  };
+
+  const { width: IMAGE_WIDTH, height: IMAGE_HEIGHT } = getImageDimensions();
 
   const getMousePos = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
@@ -62,7 +73,7 @@ const Annotation = () => {
       x: (e.clientX - rect.left) * scaleX,
       y: (e.clientY - rect.top) * scaleY
     };
-  }, []);
+  }, [IMAGE_WIDTH, IMAGE_HEIGHT]);
 
   const handleMouseDown = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
     const pos = getMousePos(e);
@@ -165,7 +176,7 @@ const Annotation = () => {
 
       <div className="flex flex-col xl:flex-row gap-6">
         {/* Annotations List Sidebar */}
-        <div className="xl:w-64 w-full order-2 xl:order-1">
+        <div className="xl:w-80 w-full order-2 xl:order-1">
           <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-4 border border-gray-700/50">
             <h3 className="text-lg font-bold text-white mb-4">Annotations ({boundingBoxes.length})</h3>
             <div className="space-y-3 max-h-96 overflow-y-auto">
