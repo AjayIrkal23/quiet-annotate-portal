@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Provider } from 'react-redux';
 import { store } from './store/store';
+import Navigation from "./components/Navigation";
 import Dashboard from "./pages/Dashboard";
 import Upload from "./pages/Upload";
 import Annotation from "./pages/Annotation";
@@ -21,8 +22,9 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 w-full">
-            <main className="w-full">
+          <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 w-full flex">
+            <Navigation />
+            <main className="flex-1">
               <Routes>
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/upload" element={<Upload />} />
