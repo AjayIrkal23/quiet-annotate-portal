@@ -14,7 +14,7 @@ const Navigation = () => {
   ];
 
   return (
-    <nav className="bg-gray-900/95 backdrop-blur-sm border-r border-gray-700/50 w-64 min-h-screen p-6">
+    <nav className="bg-gray-900/95 backdrop-blur-sm border-r border-gray-700/50 w-64 min-h-screen p-6 flex-shrink-0">
       {/* Logo */}
       <div className="flex items-center space-x-3 mb-8">
         <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-600 rounded-lg flex items-center justify-center">
