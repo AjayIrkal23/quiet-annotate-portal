@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useCallback } from 'react';
-import { Trash2, Save, RotateCcw, Image as ImageIcon } from 'lucide-react';
+import { Trash2, Save, RotateCcw, Image as ImageIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 import IssueDialog from '../components/IssueDialog';
 
 interface BoundingBox {
@@ -40,7 +40,7 @@ const Annotation = () => {
   const [isDrawing, setIsDrawing] = useState(false);
   const [currentBox, setCurrentBox] = useState<Partial<BoundingBox> | null>(null);
   const [issues, setIssues] = useState<Issue[]>(defaultIssues);
-  const [selectedImage, setSelectedImage] = useState<string>(dummyImages[0]);
+  const [currentImageIndex, setCurrentImageIndex] = useState<number>(0);
   const [showIssueDialog, setShowIssueDialog] = useState(false);
   const [pendingBox, setPendingBox] = useState<Partial<BoundingBox> | null>(null);
 
@@ -121,6 +121,16 @@ const Annotation = () => {
     setBoundingBoxes(prev => prev.filter(box => box.id !== id));
   };
 
+  const nextImage = () => {
+    setCurrentImageIndex(prev => (prev + 1) % dummyImages.length);
+    setBoundingBoxes([]);
+  };
+
+  const previousImage = () => {
+    setCurrentImageIndex(prev => (prev - 1 + dummyImages.length) % dummyImages.length);
+    setBoundingBoxes([]);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-6">
       {/* Header */}
@@ -155,32 +165,8 @@ const Annotation = () => {
       </div>
 
       <div className="flex gap-6">
-        {/* Image Selection Sidebar */}
+        {/* Annotations List Sidebar */}
         <div className="w-64 space-y-4">
-          <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-4 border border-gray-700/50">
-            <h3 className="text-lg font-bold text-white mb-4">Select Image</h3>
-            <div className="space-y-3">
-              {dummyImages.map((image, index) => (
-                <div
-                  key={index}
-                  onClick={() => setSelectedImage(image)}
-                  className={`cursor-pointer rounded-lg overflow-hidden border-2 transition-all duration-200 ${
-                    selectedImage === image 
-                      ? 'border-purple-500 transform scale-105' 
-                      : 'border-gray-600 hover:border-gray-500'
-                  }`}
-                >
-                  <img 
-                    src={image} 
-                    alt={`Road ${index + 1}`}
-                    className="w-full h-24 object-cover"
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Annotations List */}
           <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-4 border border-gray-700/50">
             <h3 className="text-lg font-bold text-white mb-4">Annotations ({boundingBoxes.length})</h3>
             <div className="space-y-3 max-h-96 overflow-y-auto">
@@ -196,7 +182,7 @@ const Annotation = () => {
                     <div key={box.id} className="bg-gray-700/50 rounded-lg p-3 border border-gray-600/50">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-3">
-                          <div className="w-4 h-4 rounded-full" style={{ backgroundColor: issueData?.color || '#6b7280' }} />
+                          <div className="w-4 h-4 rounded-full bg-red-500" />
                           <div>
                             <p className="text-white font-medium text-sm">{issueData?.label || 'Unknown'}</p>
                             <p className="text-gray-400 text-xs">
@@ -223,16 +209,36 @@ const Annotation = () => {
         <div className="flex-1">
           <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl border border-gray-700/50 shadow-2xl p-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold text-white">Image Canvas</h2>
-              <div className="text-sm text-gray-400">
-                {boundingBoxes.length} annotations
+              <div className="flex items-center space-x-4">
+                <h2 className="text-lg font-bold text-white">Image Canvas</h2>
+                <div className="text-sm text-gray-400">
+                  Image {currentImageIndex + 1} of {dummyImages.length}
+                </div>
+              </div>
+              
+              {/* Image Navigation */}
+              <div className="flex items-center space-x-2">
+                <button 
+                  onClick={previousImage}
+                  className="flex items-center space-x-2 bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded-lg transition-all duration-200"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                  <span>Previous</span>
+                </button>
+                <button 
+                  onClick={nextImage}
+                  className="flex items-center space-x-2 bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded-lg transition-all duration-200"
+                >
+                  <span>Next</span>
+                  <ChevronRight className="w-4 h-4" />
+                </button>
               </div>
             </div>
             
             <div className="relative bg-gray-900 rounded-xl overflow-hidden border border-gray-600" style={{ width: IMAGE_WIDTH, height: IMAGE_HEIGHT }}>
               <img
                 ref={imageRef}
-                src={selectedImage}
+                src={dummyImages[currentImageIndex]}
                 alt="Annotation target"
                 className="absolute inset-0 w-full h-full object-cover"
                 style={{ width: IMAGE_WIDTH, height: IMAGE_HEIGHT }}
@@ -249,41 +255,36 @@ const Annotation = () => {
               />
               
               {/* Render bounding boxes */}
-              {boundingBoxes.map(box => {
-                const issueData = issues.find(i => i.value === box.issue);
-                return (
-                  <div
-                    key={box.id}
-                    className="absolute border-2 bg-opacity-20 rounded pointer-events-none"
-                    style={{
-                      left: Math.min(box.x, box.x + box.width),
-                      top: Math.min(box.y, box.y + box.height),
-                      width: Math.abs(box.width),
-                      height: Math.abs(box.height),
-                      borderColor: issueData?.color || '#6b7280',
-                      backgroundColor: issueData?.color || '#6b7280'
-                    }}
+              {boundingBoxes.map(box => (
+                <div
+                  key={box.id}
+                  className="absolute border-2 border-red-500 rounded pointer-events-none"
+                  style={{
+                    left: Math.min(box.x, box.x + box.width),
+                    top: Math.min(box.y, box.y + box.height),
+                    width: Math.abs(box.width),
+                    height: Math.abs(box.height),
+                    backgroundColor: 'transparent'
+                  }}
+                >
+                  <div 
+                    className="absolute -top-8 left-0 bg-red-500 px-2 py-1 rounded text-xs font-medium text-white"
                   >
-                    <div 
-                      className="absolute -top-8 left-0 px-2 py-1 rounded text-xs font-medium text-white"
-                      style={{ backgroundColor: issueData?.color || '#6b7280' }}
-                    >
-                      {issueData?.label || 'Unknown'}
-                    </div>
+                    {issues.find(i => i.value === box.issue)?.label || 'Unknown'}
                   </div>
-                );
-              })}
+                </div>
+              ))}
               
               {/* Render current drawing box */}
               {currentBox && currentBox.width !== 0 && currentBox.height !== 0 && (
                 <div
-                  className="absolute border-2 border-dashed bg-white bg-opacity-20 rounded pointer-events-none"
+                  className="absolute border-2 border-dashed border-red-500 rounded pointer-events-none"
                   style={{
                     left: Math.min(currentBox.x!, currentBox.x! + currentBox.width!),
                     top: Math.min(currentBox.y!, currentBox.y! + currentBox.height!),
                     width: Math.abs(currentBox.width!),
                     height: Math.abs(currentBox.height!),
-                    borderColor: '#ffffff'
+                    backgroundColor: 'transparent'
                   }}
                 />
               )}
