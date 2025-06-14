@@ -73,11 +73,9 @@ const Users: React.FC = () => {
   const [allCorrectAnswered, setAllCorrectAnswered] = React.useState(false);
   // New: track per-box feedback for sidebar ("green"/"red")
   const [feedbackBoxes, setFeedbackBoxes] = React.useState<{ [id: string]: "green" | "red" | undefined }>({});
-
+  const [screenW, setScreenW] = React.useState(window.innerWidth);
   React.useEffect(() => {
-    function handleResize() {
-      setDims(getAnnotationDimensions());
-    }
+    function handleResize() { setScreenW(window.innerWidth); }
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
@@ -229,17 +227,18 @@ const Users: React.FC = () => {
 
   // See if all the bounding boxes are processed for the last image
   const lastImage = currentImageIndex === dummyImages.length - 1;
+  const isMobile = screenW < 1024;
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
       <div
         style={{
-          maxWidth: IMAGE_WIDTH + 64,
-          minHeight: IMAGE_HEIGHT + 80,
+          maxWidth: isMobile ? "100vw" : IMAGE_WIDTH + 64,
+          minHeight: isMobile ? undefined : IMAGE_HEIGHT + 80,
           margin: 0,
         }}
-        className="relative w-full flex flex-col items-center justify-center mt-14"
+        className="relative w-full flex flex-col items-center justify-center mt-10 md:mt-14"
       >
-        <div className="mb-3 w-full flex flex-row items-center justify-between px-6">
+        <div className="mb-3 w-full flex flex-row items-center justify-between px-2 md:px-6">
           <h1 className="text-2xl font-bold text-gradient bg-gradient-to-r from-emerald-400 to-pink-400 bg-clip-text text-transparent">
             User Annotation Quiz
           </h1>
@@ -247,14 +246,22 @@ const Users: React.FC = () => {
             Image {currentImageIndex + 1} of {dummyImages.length}
           </div>
         </div>
-        <div className="flex flex-row w-full gap-5 items-start">
-          <div className="flex-shrink-0 w-[260px]">
+        <div
+          className={
+            isMobile
+              ? "flex flex-col w-full gap-5 items-stretch"
+              : "flex flex-row w-full gap-5 items-start"
+          }
+        >
+          {/* Sidebar */}
+          <div className={isMobile ? "w-full order-2" : "flex-shrink-0 w-[260px] order-1"}>
             <QuizSidebar
               boundingBoxes={boundingBoxes}
               feedbackBoxes={feedbackBoxes}
             />
           </div>
-          <div className="flex flex-col items-center justify-center w-full relative">
+          {/* Image/Quiz */}
+          <div className={isMobile ? "w-full flex flex-col items-center order-1" : "flex flex-col items-center justify-center w-full relative order-2"}>
             <QuizImage
               imageUrl={imageUrl}
               boundingBoxes={boundingBoxes}
@@ -269,13 +276,11 @@ const Users: React.FC = () => {
               quizForBox={quizForBox}
               feedbackVisible={feedbackVisible}
             />
-
             <QuizOptions
               quizForBox={quizForBox}
               onAnswer={handleAnswer}
               lockedUI={lockedUI}
             />
-
             <QuizFeedback
               visible={feedbackVisible && feedback !== null}
               correct={!!feedback?.correct}
@@ -288,7 +293,7 @@ const Users: React.FC = () => {
           </div>
         </div>
         {/* Next + All Correct button row */}
-        <div className="flex flex-row justify-end gap-3 mt-6 w-full px-6 items-center">
+        <div className={`flex ${isMobile ? "flex-col gap-2 items-stretch" : "flex-row gap-3 justify-end items-center"} mt-6 w-full px-2 md:px-6`}>
           <Button
             onClick={() =>
               handleAllCorrect(boundingBoxes.length === 0)
@@ -302,9 +307,9 @@ const Users: React.FC = () => {
           <Button
             onClick={nextImage}
             disabled={!canNext || lastImage}
-            className={`px-6 py-2 rounded-lg text-lg
-              ${canNext && !lastImage ? "bg-green-500 hover:bg-green-600 text-white" : ""}
-            `}
+            className={`px-6 py-2 rounded-lg text-lg ${
+              canNext && !lastImage ? "bg-green-500 hover:bg-green-600 text-white" : ""
+            }`}
             variant={canNext && !lastImage ? "default" : "secondary"}
           >
             Next Image
