@@ -40,6 +40,9 @@ const dummyImages = [
   'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1200&h=800&fit=crop'
 ];
 
+const FIXED_IMAGE_WIDTH = 900;
+const FIXED_IMAGE_HEIGHT = 600;
+
 const Annotation = () => {
   const [boundingBoxes, setBoundingBoxes] = useState<BoundingBox[]>([]);
   const [isDrawing, setIsDrawing] = useState(false);
@@ -52,29 +55,16 @@ const Annotation = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
 
-  // Responsive dimensions - larger for bigger screens
-  const getImageDimensions = () => {
-    if (window.innerWidth >= 1536) { // 2xl screens
-      return { width: 1000, height: 700 };
-    } else if (window.innerWidth >= 1280) { // xl screens
-      return { width: 900, height: 650 };
-    } else if (window.innerWidth >= 1024) { // lg screens
-      return { width: 800, height: 600 };
-    } else {
-      return { width: 700, height: 500 }; // default
-    }
-  };
-
-  const { width: IMAGE_WIDTH, height: IMAGE_HEIGHT } = getImageDimensions();
+  // Set all screens to the same fixed image width and height
+  const IMAGE_WIDTH = FIXED_IMAGE_WIDTH;
+  const IMAGE_HEIGHT = FIXED_IMAGE_HEIGHT;
 
   const getMousePos = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
     if (!canvas) return { x: 0, y: 0 };
-    
     const rect = canvas.getBoundingClientRect();
     const scaleX = IMAGE_WIDTH / rect.width;
     const scaleY = IMAGE_HEIGHT / rect.height;
-    
     return {
       x: (e.clientX - rect.left) * scaleX,
       y: (e.clientY - rect.top) * scaleY
