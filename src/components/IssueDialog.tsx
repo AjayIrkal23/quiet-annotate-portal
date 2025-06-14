@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import {
   AlertDialog,
@@ -40,11 +40,19 @@ const IssueDialog: React.FC<IssueDialogProps> = ({
   const [newIssueName, setNewIssueName] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
 
+  // Reset state when dialog opens
+  useEffect(() => {
+    if (!open) {
+      setSelectedIssue('');
+      setNewIssueName('');
+      setShowAddForm(false);
+    }
+  }, [open]);
+
   const handleSelectIssue = () => {
     if (selectedIssue) {
       onSelectIssue(selectedIssue);
       onOpenChange(false);
-      setSelectedIssue('');
     }
   };
 
