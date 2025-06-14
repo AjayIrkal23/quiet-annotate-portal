@@ -102,10 +102,10 @@ export function useAnnotationManager() {
     }
   }, [pendingBox, allAnnotations, currentImageIndex, dispatch]);
 
-  // Save on component unmount
+  // --- FIX: Always flush pending box on unmount ---
   useEffect(() => {
+    // On unmount, flush any pendingBox for the current image
     return () => {
-      // Always flush pending
       flushPendingBox();
       // Save current state forcibly (gets handled in flush too, but safe)
       const imageId = dummyImages[currentImageIndex];
@@ -113,7 +113,7 @@ export function useAnnotationManager() {
       saveBoxesForCurrentImage(latestBoxes);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [flushPendingBox, currentImageIndex, allAnnotations, saveBoxesForCurrentImage]);
 
   // useEffect to set dimensions on resize
   useEffect(() => {
