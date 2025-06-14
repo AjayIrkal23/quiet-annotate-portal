@@ -271,24 +271,26 @@ const Users: React.FC = () => {
             </div>
           </div>
           
-          {/* Score Card */}
-          <div className="lg:w-64">
-            <ScoreCard
-              correctAnswers={correctAnswers}
-              totalQuestions={totalQuestions}
-              accuracy={accuracy}
-            />
-          </div>
-          
-          {/* Button actions */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
-            <Button onClick={() => handleAllCorrect(boundingBoxes.length === 0)} disabled={lockedUI} className="flex items-center bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all w-full sm:w-auto" variant="default">
-              Everything is correct in this image
-            </Button>
-            <Button onClick={nextImg} disabled={!canNext || lastImage} className={`flex items-center px-4 py-2 rounded-lg text-sm font-semibold transition-all w-full sm:w-auto ${canNext && !lastImage ? "bg-green-500 hover:bg-green-600 text-white" : ""}`} variant={canNext && !lastImage ? "default" : "secondary"}>
-              Next
-              <ChevronRight className="w-4 h-4 ml-1" />
-            </Button>
+          {/* Button actions and Score Card side by side */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-start space-y-3 sm:space-y-0 sm:space-x-4">
+            <div className="flex flex-col space-y-2">
+              <Button onClick={() => handleAllCorrect(boundingBoxes.length === 0)} disabled={lockedUI} className="flex items-center bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 rounded-md text-sm font-medium transition-all" variant="default">
+                Everything is correct
+              </Button>
+              <Button onClick={nextImg} disabled={!canNext || lastImage} className={`flex items-center px-3 py-1.5 rounded-md text-sm font-medium transition-all ${canNext && !lastImage ? "bg-green-500 hover:bg-green-600 text-white" : ""}`} variant={canNext && !lastImage ? "default" : "secondary"}>
+                Next
+                <ChevronRight className="w-4 h-4 ml-1" />
+              </Button>
+            </div>
+            
+            {/* Score Card */}
+            <div className="w-48">
+              <ScoreCard
+                correctAnswers={correctAnswers}
+                totalQuestions={totalQuestions}
+                accuracy={accuracy}
+              />
+            </div>
           </div>
         </div>
       </div>
