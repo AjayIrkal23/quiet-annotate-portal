@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import QuizImage from "@/components/QuizImage";
 import QuizOptions from "@/components/QuizOptions";
 import QuizFeedback from "@/components/QuizFeedback";
+import QuizAllCorrectOption from "@/components/QuizAllCorrectOption";
 const dummyImages = ["https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=1200&h=800&fit=crop", "https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=1200&h=800&fit=crop", "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1200&h=800&fit=crop", "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1200&h=800&fit=crop"];
 const getAnnotationDimensions = () => {
   const screenW = window.innerWidth;
@@ -69,6 +70,7 @@ const Users: React.FC = () => {
   const [feedback, setFeedback] = useState(null);
   const [feedbackVisible, setFeedbackVisible] = useState(false);
   const [lockedUI, setLockedUI] = useState(false);
+  const [allCorrectAnswered, setAllCorrectAnswered] = React.useState(false);
   React.useEffect(() => {
     function handleResize() {
       setDims(getAnnotationDimensions());
@@ -96,6 +98,7 @@ const Users: React.FC = () => {
     setFeedback(null);
     setFeedbackVisible(false);
     setLockedUI(false);
+    setAllCorrectAnswered(false);
   }, [currentImageIndex, imageUrl]);
   const handleBoxReveal = hiddenBox => {
     setRevealedBoxes(prev => ({
@@ -154,7 +157,48 @@ const Users: React.FC = () => {
     };
     window.addEventListener('mousedown', handleClick, true);
   };
-  const canNext = boundingBoxes.length > 0 && Object.keys(answeredBoxes).length === boundingBoxes.length;
+  const handleAllCorrect = (wasCorrect: boolean) => {
+    setLockedUI(true);
+    setFeedback({
+      correct: wasCorrect,
+      label: wasCorrect ? "Correct! No issues found!" : "Wrong! There actually are issues in this image."
+    });
+    setFeedbackVisible(true);
+    setAllCorrectAnswered(true);
+    setQuizForBox(null);
+
+    // Feedback logic: always reset after 1s or on click
+    const timeout = setTimeout(() => {
+      setFeedback(null);
+      setFeedbackVisible(false);
+      setLockedUI(false);
+    }, 1000);
+    const handleClick = () => {
+      clearTimeout(timeout);
+      setFeedback(null);
+      setFeedbackVisible(false);
+      setLockedUI(false);
+      window.removeEventListener('mousedown', handleClick, true);
+    };
+    window.addEventListener('mousedown', handleClick, true);
+
+    // If correct, optionally trigger confetti etc.
+    if (wasCorrect) {
+      setTimeout(() => {
+        confetti({
+          particleCount: 120,
+          spread: 78,
+          origin: { y: 0.5 }
+        });
+      }, 200);
+    }
+  };
+
+  // True if all boxes answered for this image OR allCorrectAnswered
+  const canNext =
+    (boundingBoxes.length > 0 && Object.keys(answeredBoxes).length === boundingBoxes.length) ||
+    (boundingBoxes.length === 0 && allCorrectAnswered);
+
   const nextImage = () => {
     if (currentImageIndex < dummyImages.length - 1) {
       setCurrentImageIndex(currentImageIndex + 1);
@@ -182,35 +226,58 @@ const Users: React.FC = () => {
         </div>
         <div className="flex flex-col items-center justify-center w-full">
           <div className="relative">
-            <QuizImage imageUrl={imageUrl} boundingBoxes={boundingBoxes} revealedBoxes={revealedBoxes} answeredBoxes={answeredBoxes} onBoxReveal={handleBoxReveal} imageDims={{
-            width: IMAGE_WIDTH,
-            height: IMAGE_HEIGHT
-          }} lockedUI={lockedUI} quizForBox={quizForBox} feedbackVisible={feedbackVisible} />
+            <QuizImage
+              imageUrl={imageUrl}
+              boundingBoxes={boundingBoxes}
+              revealedBoxes={revealedBoxes}
+              answeredBoxes={answeredBoxes}
+              onBoxReveal={handleBoxReveal}
+              imageDims={{
+                width: 900, // Match annotation screen
+                height: 600
+              }}
+              lockedUI={lockedUI}
+              quizForBox={quizForBox}
+              feedbackVisible={feedbackVisible}
+            />
 
-            <QuizOptions quizForBox={quizForBox} onAnswer={handleAnswer} lockedUI={lockedUI} />
+            <QuizOptions
+              quizForBox={quizForBox}
+              onAnswer={handleAnswer}
+              lockedUI={lockedUI}
+            />
 
-            <QuizFeedback visible={feedbackVisible && feedback !== null} correct={!!feedback?.correct} onDismiss={() => {
-            setFeedback(null);
-            setFeedbackVisible(false);
-            setLockedUI(false);
-          }} />
+            <QuizFeedback
+              visible={feedbackVisible && feedback !== null}
+              correct={!!feedback?.correct}
+              onDismiss={() => {
+                setFeedback(null);
+                setFeedbackVisible(false);
+                setLockedUI(false);
+              }}
+            />
 
-            {/* No boxes available */}
-            {boundingBoxes.length === 0 && <div className="absolute z-20 w-full h-full flex flex-col items-center justify-center bg-black/60 rounded-xl animate-fade-in">
-                <div className="text-white text-xl font-semibold mb-2">
-                  No bounding boxes for this image.
-                </div>
-                <div className="text-gray-300 text-sm">
-                  Nothing to annotate.
-                </div>
-              </div>}
+            {/* "Everything is correct" option */}
+            {boundingBoxes.length === 0 && !allCorrectAnswered && (
+              <QuizAllCorrectOption
+                hasBoundingBoxes={false}
+                lockedUI={lockedUI}
+                onAllCorrect={handleAllCorrect}
+              />
+            )}
+            {/* Cheat-detection: If the user tries to trigger all-correct on a non-empty image, can show a similar option if wanted, but requirement is for images with 0 bounding boxes only */}
           </div>
         </div>
         {/* Next button */}
         <div className="flex justify-end mt-6 w-full px-6">
-          <Button onClick={nextImage} disabled={!canNext || lastImage} className={`px-6 py-2 rounded-lg text-lg 
+          <Button
+            onClick={nextImage}
+            disabled={!canNext || lastImage}
+            className={`px-6 py-2 rounded-lg text-lg 
               ${canNext && !lastImage ? "bg-green-500 hover:bg-green-600 text-white" : ""}
-            `} variant={canNext && !lastImage ? "default" : "secondary"}>
+            `}
+            variant={canNext && !lastImage ? "default" : "secondary"}
+          >
             Next Image
           </Button>
         </div>
