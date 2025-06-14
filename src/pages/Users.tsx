@@ -256,7 +256,7 @@ const Users: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-4 lg:p-6">
       {/* Header (Title + Actions) */}
       <div className="mb-6">
-        <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div className="flex items-center space-x-3">
             <div className="w-8 h-8 bg-gradient-to-r from-emerald-400 to-pink-400 rounded-lg flex items-center justify-center">
               <span className="text-white text-lg font-bold">👤</span>
@@ -271,26 +271,30 @@ const Users: React.FC = () => {
             </div>
           </div>
           
-          {/* Button actions and Score Card side by side */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-start space-y-3 sm:space-y-0 sm:space-x-4">
-            <div className="flex flex-col space-y-2">
-              <Button onClick={() => handleAllCorrect(boundingBoxes.length === 0)} disabled={lockedUI} className="flex items-center bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 rounded-md text-sm font-medium transition-all" variant="default">
-                Everything is correct
-              </Button>
-              <Button onClick={nextImg} disabled={!canNext || lastImage} className={`flex items-center px-3 py-1.5 rounded-md text-sm font-medium transition-all ${canNext && !lastImage ? "bg-green-500 hover:bg-green-600 text-white" : ""}`} variant={canNext && !lastImage ? "default" : "secondary"}>
-                Next
-                <ChevronRight className="w-4 h-4 ml-1" />
-              </Button>
-            </div>
-            
-            {/* Score Card */}
-            <div className="w-48">
-              <ScoreCard
-                correctAnswers={correctAnswers}
-                totalQuestions={totalQuestions}
-                accuracy={accuracy}
-              />
-            </div>
+          {/* Compact horizontal layout for buttons and score card */}
+          <div className="flex items-center space-x-3">
+            <Button 
+              onClick={() => handleAllCorrect(boundingBoxes.length === 0)} 
+              disabled={lockedUI} 
+              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all" 
+              variant="default"
+            >
+              Everything is correct
+            </Button>
+            <Button 
+              onClick={nextImg} 
+              disabled={!canNext || lastImage} 
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${canNext && !lastImage ? "bg-green-500 hover:bg-green-600 text-white" : ""}`} 
+              variant={canNext && !lastImage ? "default" : "secondary"}
+            >
+              Next
+              <ChevronRight className="w-4 h-4 ml-1" />
+            </Button>
+            <ScoreCard
+              correctAnswers={correctAnswers}
+              totalQuestions={totalQuestions}
+              accuracy={accuracy}
+            />
           </div>
         </div>
       </div>
