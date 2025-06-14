@@ -156,11 +156,12 @@ const Annotation = () => {
     (state: RootState) => state.annotation.annotations[currentImageId] || []
   );
 
-  // FIX: Only reload boxes when currentImageId changes,
-  // and ONLY if savedBoxes is different from boundingBoxes
+  // FIX: Only reload boxes when currentImageId changes (on image switch)
   useEffect(() => {
     setBoundingBoxes(savedBoxes);
-  }, [currentImageId, savedBoxes]);
+    // Only depend on currentImageId (not savedBoxes)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentImageId]);
 
   // Save Handler
   const handleSave = () => {
