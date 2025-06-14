@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../store/store";
@@ -13,21 +12,32 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { setCurrentImageIndex, nextImage, previousImage } from "../store/imageNavSlice";
 
 // Dummy images and issues (keep consistent with annotation manager)
-const dummyImages = [
-  "https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=1200&h=800&fit=crop",
-  "https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=1200&h=800&fit=crop",
-  "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1200&h=800&fit=crop",
-  "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1200&h=800&fit=crop",
-];
-
-const defaultIssues = [
-  { value: "pothole", label: "Pothole", color: "#ef4444" },
-  { value: "crack", label: "Road Crack", color: "#f97316" },
-  { value: "debris", label: "Debris", color: "#eab308" },
-  { value: "marking", label: "Missing Marking", color: "#3b82f6" },
-  { value: "sign", label: "Damaged Sign", color: "#8b5cf6" },
-  { value: "other", label: "Other Issue", color: "#6b7280" },
-];
+const dummyImages = ["https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=1200&h=800&fit=crop", "https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=1200&h=800&fit=crop", "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1200&h=800&fit=crop", "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1200&h=800&fit=crop"];
+const defaultIssues = [{
+  value: "pothole",
+  label: "Pothole",
+  color: "#ef4444"
+}, {
+  value: "crack",
+  label: "Road Crack",
+  color: "#f97316"
+}, {
+  value: "debris",
+  label: "Debris",
+  color: "#eab308"
+}, {
+  value: "marking",
+  label: "Missing Marking",
+  color: "#3b82f6"
+}, {
+  value: "sign",
+  label: "Damaged Sign",
+  color: "#8b5cf6"
+}, {
+  value: "other",
+  label: "Other Issue",
+  color: "#6b7280"
+}];
 
 // Use the same dimension calculation as annotation manager
 function getAnnotationDimensions() {
@@ -38,28 +48,24 @@ function getAnnotationDimensions() {
   const MAX_WIDTH = Math.min(screenW - 64, 1152);
   const MAX_HEIGHT = Math.min(screenH - 112, 864);
   const ASPECT_RATIO = 4 / 3;
-
-  let width = MAX_WIDTH, height = MAX_HEIGHT;
-
+  let width = MAX_WIDTH,
+    height = MAX_HEIGHT;
   if (width / height > ASPECT_RATIO) {
     width = height * ASPECT_RATIO;
   } else {
     height = width / ASPECT_RATIO;
   }
-
   return {
     width: Math.round(width),
-    height: Math.round(height),
+    height: Math.round(height)
   };
 }
-
 function getRandomOptions(correct, allIssues) {
   let options = allIssues.filter(i => i.value !== correct.value);
   options = options.sort(() => Math.random() - 0.5).slice(0, 3);
   options.push(correct);
   return options.sort(() => Math.random() - 0.5);
 }
-
 const Users: React.FC = () => {
   const dispatch = useDispatch();
   // Get the current image index from Redux
@@ -71,17 +77,29 @@ const Users: React.FC = () => {
   const boundingBoxes = allAnnotations[imageUrl] || [];
 
   // Use the same dimensions as annotation manager
-  const [{ width: IMAGE_WIDTH, height: IMAGE_HEIGHT }, setDims] = useState(getAnnotationDimensions());
+  const [{
+    width: IMAGE_WIDTH,
+    height: IMAGE_HEIGHT
+  }, setDims] = useState(getAnnotationDimensions());
 
   // State for quiz/game mechanics
-  const [revealedBoxes, setRevealedBoxes] = useState<{ [id: string]: boolean }>({});
-  const [answeredBoxes, setAnsweredBoxes] = useState<{ [id: string]: boolean }>({});
+  const [revealedBoxes, setRevealedBoxes] = useState<{
+    [id: string]: boolean;
+  }>({});
+  const [answeredBoxes, setAnsweredBoxes] = useState<{
+    [id: string]: boolean;
+  }>({});
   const [quizForBox, setQuizForBox] = useState<any>(null);
-  const [feedback, setFeedback] = useState<{ correct: boolean; label: string } | null>(null);
+  const [feedback, setFeedback] = useState<{
+    correct: boolean;
+    label: string;
+  } | null>(null);
   const [feedbackVisible, setFeedbackVisible] = useState(false);
   const [lockedUI, setLockedUI] = useState(false);
   const [allCorrectAnswered, setAllCorrectAnswered] = useState(false);
-  const [feedbackBoxes, setFeedbackBoxes] = useState<{ [id: string]: "green" | "red" | undefined }>({});
+  const [feedbackBoxes, setFeedbackBoxes] = useState<{
+    [id: string]: "green" | "red" | undefined;
+  }>({});
 
   // Score tracking state
   const [correctAnswers, setCorrectAnswers] = useState(0);
@@ -89,7 +107,7 @@ const Users: React.FC = () => {
 
   // Responsive: get window width to determine mobile status
   const [screenW, setScreenW] = useState(window.innerWidth);
-  
+
   // Update dimensions on resize
   useEffect(() => {
     const handleResize = () => {
@@ -111,8 +129,7 @@ const Users: React.FC = () => {
     setAllCorrectAnswered(false);
     setFeedbackBoxes({});
   }, [currentImageIndex]);
-
-  const handleBoxReveal = (hiddenBox) => {
+  const handleBoxReveal = hiddenBox => {
     setRevealedBoxes(prev => ({
       ...prev,
       [hiddenBox.id]: true
@@ -128,8 +145,7 @@ const Users: React.FC = () => {
       correct: correctIssue
     });
   };
-
-  const handleAnswer = (sel) => {
+  const handleAnswer = sel => {
     if (!quizForBox) return;
     const wasCorrect = sel.value === quizForBox.correct.value;
     setLockedUI(true);
@@ -153,13 +169,14 @@ const Users: React.FC = () => {
     if (wasCorrect) {
       setCorrectAnswers(prev => prev + 1);
     }
-
     if (wasCorrect) {
       setTimeout(() => {
         confetti({
           particleCount: 180,
           spread: 90,
-          origin: { y: 0.5 }
+          origin: {
+            y: 0.5
+          }
         });
       }, 200);
     }
@@ -168,7 +185,6 @@ const Users: React.FC = () => {
       setFeedbackVisible(false);
       setLockedUI(false);
     }, 1000);
-
     const handleClick = () => {
       clearTimeout(timeout);
       setFeedback(null);
@@ -178,7 +194,6 @@ const Users: React.FC = () => {
     };
     window.addEventListener("mousedown", handleClick, true);
   };
-
   const handleAllCorrect = (wasCorrect: boolean) => {
     setLockedUI(true);
     setFeedback({
@@ -217,22 +232,21 @@ const Users: React.FC = () => {
       window.removeEventListener("mousedown", handleClick, true);
     };
     window.addEventListener("mousedown", handleClick, true);
-
     if (wasCorrect) {
       setTimeout(() => {
         confetti({
           particleCount: 120,
           spread: 78,
-          origin: { y: 0.5 }
+          origin: {
+            y: 0.5
+          }
         });
       }, 200);
     }
   };
 
   // Navigation computed variables
-  const canNext =
-    (boundingBoxes.length > 0 && Object.keys(answeredBoxes).length === boundingBoxes.length) ||
-    (boundingBoxes.length === 0 && allCorrectAnswered);
+  const canNext = boundingBoxes.length > 0 && Object.keys(answeredBoxes).length === boundingBoxes.length || boundingBoxes.length === 0 && allCorrectAnswered;
   const lastImage = currentImageIndex === dummyImages.length - 1;
   const firstImage = currentImageIndex === 0;
   const isMobile = screenW < 1024;
@@ -240,7 +254,9 @@ const Users: React.FC = () => {
   // Page navigation actions
   const nextImg = () => {
     if (currentImageIndex < dummyImages.length - 1) {
-      dispatch(nextImage({ imagesLength: dummyImages.length }));
+      dispatch(nextImage({
+        imagesLength: dummyImages.length
+      }));
     }
   };
   const prevImg = () => {
@@ -250,10 +266,8 @@ const Users: React.FC = () => {
   };
 
   // Calculate accuracy
-  const accuracy = totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 0;
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-4 lg:p-6">
+  const accuracy = totalQuestions > 0 ? Math.round(correctAnswers / totalQuestions * 100) : 0;
+  return <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-4 lg:p-6">
       {/* Header (Title + Actions) */}
       <div className="mb-6">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
@@ -272,29 +286,15 @@ const Users: React.FC = () => {
           </div>
           
           {/* Compact horizontal layout for buttons and score card */}
-          <div className="flex items-center space-x-3">
-            <Button 
-              onClick={() => handleAllCorrect(boundingBoxes.length === 0)} 
-              disabled={lockedUI} 
-              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all" 
-              variant="default"
-            >
+          <div className="flex items-around space-x-3 w-full ">
+            <Button onClick={() => handleAllCorrect(boundingBoxes.length === 0)} disabled={lockedUI} className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all" variant="default">
               Everything is correct
             </Button>
-            <Button 
-              onClick={nextImg} 
-              disabled={!canNext || lastImage} 
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${canNext && !lastImage ? "bg-green-500 hover:bg-green-600 text-white" : ""}`} 
-              variant={canNext && !lastImage ? "default" : "secondary"}
-            >
+            <Button onClick={nextImg} disabled={!canNext || lastImage} className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${canNext && !lastImage ? "bg-green-500 hover:bg-green-600 text-white" : ""}`} variant={canNext && !lastImage ? "default" : "secondary"}>
               Next
               <ChevronRight className="w-4 h-4 ml-1" />
             </Button>
-            <ScoreCard
-              correctAnswers={correctAnswers}
-              totalQuestions={totalQuestions}
-              accuracy={accuracy}
-            />
+            <ScoreCard correctAnswers={correctAnswers} totalQuestions={totalQuestions} accuracy={accuracy} />
           </div>
         </div>
       </div>
@@ -323,25 +323,24 @@ const Users: React.FC = () => {
             </div>
             <div className="flex justify-center">
               <div className="relative bg-gray-900 rounded-xl overflow-hidden border border-gray-600" style={{
+              width: IMAGE_WIDTH,
+              height: IMAGE_HEIGHT
+            }}>
+                <QuizImage imageUrl={imageUrl} boundingBoxes={boundingBoxes} revealedBoxes={revealedBoxes} answeredBoxes={answeredBoxes} onBoxReveal={handleBoxReveal} imageDims={{
                 width: IMAGE_WIDTH,
                 height: IMAGE_HEIGHT
-              }}>
-                <QuizImage imageUrl={imageUrl} boundingBoxes={boundingBoxes} revealedBoxes={revealedBoxes} answeredBoxes={answeredBoxes} onBoxReveal={handleBoxReveal} imageDims={{
-                  width: IMAGE_WIDTH,
-                  height: IMAGE_HEIGHT
-                }} lockedUI={lockedUI} quizForBox={quizForBox} feedbackVisible={feedbackVisible} />
+              }} lockedUI={lockedUI} quizForBox={quizForBox} feedbackVisible={feedbackVisible} />
                 <QuizOptions quizForBox={quizForBox} onAnswer={handleAnswer} lockedUI={lockedUI} />
                 <QuizFeedback visible={feedbackVisible && feedback !== null} correct={!!feedback?.correct} onDismiss={() => {
-                  setFeedback(null);
-                  setFeedbackVisible(false);
-                  setLockedUI(false);
-                }} />
+                setFeedback(null);
+                setFeedbackVisible(false);
+                setLockedUI(false);
+              }} />
               </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
-  );
+    </div>;
 };
 export default Users;
