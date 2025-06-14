@@ -285,8 +285,8 @@ const Users: React.FC = () => {
             </div>
           </div>
           
-          {/* Compact horizontal layout for buttons and score card */}
-          <div className="flex items-around space-x-3 w-full ">
+          {/* Compact horizontal layout for buttons only */}
+          <div className="flex items-center space-x-3">
             <Button onClick={() => handleAllCorrect(boundingBoxes.length === 0)} disabled={lockedUI} className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all" variant="default">
               Everything is correct
             </Button>
@@ -294,14 +294,14 @@ const Users: React.FC = () => {
               Next
               <ChevronRight className="w-4 h-4 ml-1" />
             </Button>
-            <ScoreCard correctAnswers={correctAnswers} totalQuestions={totalQuestions} accuracy={accuracy} />
           </div>
         </div>
       </div>
 
       <div className="flex flex-col xl:flex-row gap-6">
-        {/* Sidebar - bounding boxes */}
-        <div className="xl:w-80 w-full order-2 xl:order-1 mb-6 xl:mb-0">
+        {/* Sidebar - bounding boxes and score card */}
+        <div className="xl:w-80 w-full order-2 xl:order-1 mb-6 xl:mb-0 space-y-4">
+          <ScoreCard correctAnswers={correctAnswers} totalQuestions={totalQuestions} accuracy={accuracy} />
           <QuizSidebar boundingBoxes={boundingBoxes} feedbackBoxes={feedbackBoxes} />
         </div>
         {/* Main Canvas - quiz image + options */}
