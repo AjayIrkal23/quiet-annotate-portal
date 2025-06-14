@@ -86,21 +86,24 @@ const Annotation: React.FC = () => {
       state.annotation.annotations[dummyImages[currentImageIndex]] || []
   );
 
-  // Function to save the current image boxes to redux
-  const saveBoxesForCurrentImage = useCallback(() => {
-    if (!dummyImages || !dummyImages.length) return;
-    const imageId = dummyImages[currentImageIndex];
-    dispatch(
-      saveAnnotationForImage({
-        imageId,
-        boxes: boundingBoxes,
-      })
-    );
-  }, [dummyImages, currentImageIndex, boundingBoxes, dispatch]);
+  // Function to save the current image boxes to redux: NO boundingBoxes in deps
+  const saveBoxesForCurrentImage = useCallback(
+    (boxes: BoundingBox[]) => {
+      if (!dummyImages || !dummyImages.length) return;
+      const imageId = dummyImages[currentImageIndex];
+      dispatch(
+        saveAnnotationForImage({
+          imageId,
+          boxes,
+        })
+      );
+    },
+    [dummyImages, currentImageIndex, dispatch]
+  );
 
   // Save when going to next image
   const handleNextImage = () => {
-    saveBoxesForCurrentImage();
+    saveBoxesForCurrentImage(boundingBoxes);
     if (currentImageIndex < dummyImages.length - 1) {
       setCurrentImageIndex(currentImageIndex + 1);
     }
@@ -108,7 +111,7 @@ const Annotation: React.FC = () => {
 
   // Save when going to previous image
   const handlePreviousImage = () => {
-    saveBoxesForCurrentImage();
+    saveBoxesForCurrentImage(boundingBoxes);
     if (currentImageIndex > 0) {
       setCurrentImageIndex(currentImageIndex - 1);
     }
@@ -116,15 +119,16 @@ const Annotation: React.FC = () => {
 
   // Save when jumping directly to any image (if applicable)
   const handleGoToImage = (index: number) => {
-    saveBoxesForCurrentImage();
+    saveBoxesForCurrentImage(boundingBoxes);
     setCurrentImageIndex(index);
   };
 
   // Save on component unmount
   useEffect(() => {
     return () => {
-      saveBoxesForCurrentImage();
+      saveBoxesForCurrentImage(boundingBoxes);
     };
+    // Only include saveBoxesForCurrentImage (which no longer depends on boundingBoxes)
   }, [saveBoxesForCurrentImage]);
 
   // useEffect to set dimensions on resize
@@ -181,7 +185,7 @@ const Annotation: React.FC = () => {
     // Update Redux store with new bounding box
     const imageId = dummyImages[currentImageIndex];
     const updatedBoxes = [...boundingBoxes, newBox];
-    dispatch(saveAnnotationForImage({ imageId, boxes: updatedBoxes }));
+    saveBoxesForCurrentImage(updatedBoxes);
 
     setCurrentBox(null); // Clear current box
   };
