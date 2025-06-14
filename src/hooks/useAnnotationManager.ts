@@ -102,10 +102,17 @@ export function useAnnotationManager() {
 
   // Save on component unmount
   useEffect(() => {
+    // Only use the current bounding boxes for current image
     return () => {
-      saveBoxesForCurrentImage(boundingBoxes);
+      // Grab the currently active bounding boxes just before unmount.
+      const imageId = dummyImages[currentImageIndex];
+      const latestBoxes =
+        (allAnnotations && allAnnotations[imageId]) || [];
+      saveBoxesForCurrentImage(latestBoxes);
     };
-  }, [saveBoxesForCurrentImage, boundingBoxes]);
+    // DO NOT place boundingBoxes/saveBoxesForCurrentImage in deps -- it's only for unmount!
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // useEffect to set dimensions on resize
   useEffect(() => {
