@@ -1,4 +1,3 @@
-
 import React from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -59,6 +58,9 @@ const AnnotationCanvas: React.FC<AnnotationCanvasProps> = ({
   onNextImage,
   onPreviousImage,
 }) => {
+  // Add debugging logs to investigate the box values
+  console.log("Rendering boundingBoxes for image", currentImageIndex, boundingBoxes);
+
   return (
     <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl border border-gray-700/50 shadow-2xl p-4 lg:p-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-4">
@@ -111,23 +113,26 @@ const AnnotationCanvas: React.FC<AnnotationCanvasProps> = ({
           />
 
           {/* Render bounding boxes */}
-          {boundingBoxes.map((box) => (
-            <div
-              key={box.id}
-              className="absolute border-2 border-red-500 rounded pointer-events-none"
-              style={{
-                left: Math.min(box.x, box.x + box.width),
-                top: Math.min(box.y, box.y + box.height),
-                width: Math.abs(box.width),
-                height: Math.abs(box.height),
-                backgroundColor: "transparent",
-              }}
-            >
-              <div className="absolute -top-8 left-0 bg-red-500 px-2 py-1 rounded text-xs font-medium text-white">
-                {issues.find((i) => i.value === box.issue)?.label || "Unknown"}
+          {boundingBoxes.map((box) => {
+            console.log("Box:", box);
+            return (
+              <div
+                key={box.id}
+                className="absolute border-2 border-red-500 rounded pointer-events-none"
+                style={{
+                  left: Math.min(box.x, box.x + box.width),
+                  top: Math.min(box.y, box.y + box.height),
+                  width: Math.abs(box.width),
+                  height: Math.abs(box.height),
+                  backgroundColor: "transparent",
+                }}
+              >
+                <div className="absolute -top-8 left-0 bg-red-500 px-2 py-1 rounded text-xs font-medium text-white">
+                  {issues.find((i) => i.value === box.issue)?.label || "Unknown"}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
 
           {/* Render current drawing box */}
           {currentBox &&
