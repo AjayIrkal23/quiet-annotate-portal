@@ -1,3 +1,4 @@
+
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../store/store";
@@ -102,18 +103,24 @@ export function useAnnotationManager() {
     }
   }, [pendingBox, allAnnotations, currentImageIndex, dispatch]);
 
-  // --- FIX: Always flush pending box on unmount ---
+  // Flush pending box on unmount (FIXED: removed problematic dependencies)
   useEffect(() => {
-    // On unmount, flush any pendingBox for the current image
     return () => {
-      flushPendingBox();
-      // Save current state forcibly (gets handled in flush too, but safe)
-      const imageId = dummyImages[currentImageIndex];
-      const latestBoxes = (allAnnotations && allAnnotations[imageId]) || [];
-      saveBoxesForCurrentImage(latestBoxes);
+      // On unmount, flush any pendingBox
+      if (pendingBox && pendingBox.issue) {
+        const imageId = dummyImages[currentImageIndex];
+        const currentBoxes = (allAnnotations && allAnnotations[imageId]) || [];
+        const updatedBoxes = [...currentBoxes, pendingBox];
+        dispatch(
+          saveAnnotationForImage({
+            imageId,
+            boxes: updatedBoxes,
+          })
+        );
+      }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [flushPendingBox, currentImageIndex, allAnnotations, saveBoxesForCurrentImage]);
+  }, []);
 
   // useEffect to set dimensions on resize
   useEffect(() => {
@@ -201,24 +208,16 @@ export function useAnnotationManager() {
   // Save when going to next/prev image (flush pending first)
   const handleNextImage = () => {
     flushPendingBox();
-    const latestBoxes = (allAnnotations && allAnnotations[imageId]) || [];
-    saveBoxesForCurrentImage(latestBoxes);
     dispatch(nextImage({ imagesLength: dummyImages.length }));
-    // image index is managed via Redux, so components keep in sync!
   };
 
   const handlePreviousImage = () => {
     flushPendingBox();
-    const latestBoxes = (allAnnotations && allAnnotations[imageId]) || [];
-    saveBoxesForCurrentImage(latestBoxes);
     dispatch(previousImage());
   };
 
   const handleGoToImage = (index: number) => {
     flushPendingBox();
-    const goToImageId = dummyImages[index];
-    const latestBoxes = (allAnnotations && allAnnotations[goToImageId]) || [];
-    dispatch(saveAnnotationForImage({ imageId: goToImageId, boxes: latestBoxes }));
     dispatch(setCurrentImageIndex(index));
   };
 
