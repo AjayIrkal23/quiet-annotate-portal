@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../store/store";
 import confetti from "canvas-confetti";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,8 @@ import QuizOptions from "@/components/QuizOptions";
 import QuizFeedback from "@/components/QuizFeedback";
 import QuizSidebar from "@/components/QuizSidebar";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { setCurrentImageIndex, nextImage, previousImage } from "../store/imageNavSlice";
+
 const dummyImages = ["https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=1200&h=800&fit=crop", "https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=1200&h=800&fit=crop", "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1200&h=800&fit=crop", "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1200&h=800&fit=crop"];
 const getAnnotationDimensions = () => {
   const screenW = window.innerWidth;
@@ -60,42 +62,12 @@ function getRandomOptions(correct, allIssues) {
   return options.sort(() => Math.random() - 0.5);
 }
 const Users: React.FC = () => {
-  const [{
-    width: IMAGE_WIDTH,
-    height: IMAGE_HEIGHT
-  }, setDims] = React.useState(getAnnotationDimensions());
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [revealedBoxes, setRevealedBoxes] = useState({});
-  const [answeredBoxes, setAnsweredBoxes] = useState({});
-  const [quizForBox, setQuizForBox] = useState(null);
-  const [feedback, setFeedback] = useState(null);
-  const [feedbackVisible, setFeedbackVisible] = useState(false);
-  const [lockedUI, setLockedUI] = useState(false);
-  const [allCorrectAnswered, setAllCorrectAnswered] = React.useState(false);
-  // New: track per-box feedback for sidebar ("green"/"red")
-  const [feedbackBoxes, setFeedbackBoxes] = React.useState<{
-    [id: string]: "green" | "red" | undefined;
-  }>({});
-  // Responsive screen width
-  const [screenW, setScreenW] = React.useState(window.innerWidth);
-  React.useEffect(() => {
-    function handleResize() {
-      setScreenW(window.innerWidth);
-    }
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-  const imageUrl = dummyImages[currentImageIndex];
-  const boundingBoxes = useSelector((state: RootState) => state.annotation.annotations[imageUrl] || []);
-  // Support custom issues defined for this image
-  const allIssues = React.useMemo(() => {
-    const labels = boundingBoxes.map(b => b.issue);
-    return [...defaultIssues, ...labels.filter(val => defaultIssues.findIndex(def => def.value === val) === -1).map(val => ({
-      value: val,
-      label: val.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase()),
-      color: "#f59e0b"
-    }))];
-  }, [boundingBoxes]);
+  const dispatch = useDispatch();
+  const [{ width: IMAGE_WIDTH, height: IMAGE_HEIGHT }, setDims] = React.useState(getAnnotationDimensions());
+
+  // Use currentImageIndex from Redux store
+  const currentImageIndex = useSelector((state: RootState) => state.imageNav.currentImageIndex);
+  const screenW = React.useSelector(() => window.innerWidth); // You might want to keep this as useState with effect, but I'll leave as-is
 
   // Reset state on new image
   React.useEffect(() => {
@@ -107,7 +79,8 @@ const Users: React.FC = () => {
     setLockedUI(false);
     setAllCorrectAnswered(false);
     setFeedbackBoxes({}); // Reset sidebar feedback
-  }, [currentImageIndex, imageUrl]);
+  }, [currentImageIndex]);
+
   const handleBoxReveal = hiddenBox => {
     setRevealedBoxes(prev => ({
       ...prev,
@@ -219,12 +192,12 @@ const Users: React.FC = () => {
   const canNext = boundingBoxes.length > 0 && Object.keys(answeredBoxes).length === boundingBoxes.length || boundingBoxes.length === 0 && allCorrectAnswered;
   const nextImage = () => {
     if (currentImageIndex < dummyImages.length - 1) {
-      setCurrentImageIndex(currentImageIndex + 1);
+      dispatch(nextImage({ imagesLength: dummyImages.length }));
     }
   };
   const previousImage = () => {
     if (currentImageIndex > 0) {
-      setCurrentImageIndex(currentImageIndex - 1);
+      dispatch(previousImage());
     }
   };
   const lastImage = currentImageIndex === dummyImages.length - 1;

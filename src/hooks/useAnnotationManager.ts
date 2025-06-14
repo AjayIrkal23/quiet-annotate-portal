@@ -4,6 +4,7 @@ import { RootState } from "../store/store";
 import { saveAnnotationForImage } from "../store/annotationSlice";
 import { v4 as uuidv4 } from 'uuid';
 import { Issue, BoundingBox, CurrentBox } from "@/types/annotationTypes";
+import { setCurrentImageIndex, nextImage, previousImage } from "../store/imageNavSlice";
 
 export const defaultIssues: Issue[] = [
   { value: "pothole", label: "Pothole", color: "#ef4444" },
@@ -48,16 +49,20 @@ function getAnnotationDimensions() {
 export function useAnnotationManager() {
   const [{ width: IMAGE_WIDTH, height: IMAGE_HEIGHT }, setDims] =
     useState(getAnnotationDimensions());
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const dispatch = useDispatch();
+
+  // Use currentImageIndex from Redux for global image navigation
+  const currentImageIndex = useSelector(
+    (state: RootState) => state.imageNav.currentImageIndex
+  );
+
   const [issues, setIssues] = useState<Issue[]>(defaultIssues);
   const [currentBox, setCurrentBox] = useState<CurrentBox | null>(null);
-  const [pendingBox, setPendingBox] = useState<BoundingBox | null>(null); // shown in dialog before adding
+  const [pendingBox, setPendingBox] = useState<BoundingBox | null>(null);
   const [issueDialogOpen, setIssueDialogOpen] = useState(false);
 
   const imageRef = useRef<HTMLImageElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-
-  const dispatch = useDispatch();
 
   // Use Redux selector for bounding boxes for current image
   const allAnnotations = useSelector(
@@ -196,21 +201,17 @@ export function useAnnotationManager() {
   // Save when going to next/prev image (flush pending first)
   const handleNextImage = () => {
     flushPendingBox();
-    // update to latest boundingBoxes in Redux
     const latestBoxes = (allAnnotations && allAnnotations[imageId]) || [];
     saveBoxesForCurrentImage(latestBoxes);
-    if (currentImageIndex < dummyImages.length - 1) {
-      setCurrentImageIndex(currentImageIndex + 1);
-    }
+    dispatch(nextImage({ imagesLength: dummyImages.length }));
+    // image index is managed via Redux, so components keep in sync!
   };
 
   const handlePreviousImage = () => {
     flushPendingBox();
     const latestBoxes = (allAnnotations && allAnnotations[imageId]) || [];
     saveBoxesForCurrentImage(latestBoxes);
-    if (currentImageIndex > 0) {
-      setCurrentImageIndex(currentImageIndex - 1);
-    }
+    dispatch(previousImage());
   };
 
   const handleGoToImage = (index: number) => {
@@ -218,7 +219,7 @@ export function useAnnotationManager() {
     const goToImageId = dummyImages[index];
     const latestBoxes = (allAnnotations && allAnnotations[goToImageId]) || [];
     dispatch(saveAnnotationForImage({ imageId: goToImageId, boxes: latestBoxes }));
-    setCurrentImageIndex(index);
+    dispatch(setCurrentImageIndex(index));
   };
 
   // Delete box
@@ -267,7 +268,7 @@ export function useAnnotationManager() {
     IMAGE_WIDTH,
     IMAGE_HEIGHT,
     currentImageIndex,
-    setCurrentImageIndex,
+    setCurrentImageIndex: (idx: number) => dispatch(setCurrentImageIndex(idx)),
     issues,
     setIssues,
     currentBox,
