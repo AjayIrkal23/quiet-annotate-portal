@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -13,6 +12,7 @@ import Upload from "./pages/Upload";
 import Annotation from "./pages/Annotation";
 import Leaderboard from "./pages/Leaderboard";
 import NotFound from "./pages/NotFound";
+import Users from "./pages/Users";
 
 const queryClient = new QueryClient();
 
@@ -32,6 +32,7 @@ const App = () => (
                   <Route path="/upload" element={<Upload />} />
                   <Route path="/annotation" element={<Annotation />} />
                   <Route path="/leaderboard" element={<Leaderboard />} />
+                  <Route path="/users" element={<Users />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </main>
