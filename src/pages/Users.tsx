@@ -7,6 +7,7 @@ import QuizImage from "@/components/QuizImage";
 import QuizOptions from "@/components/QuizOptions";
 import QuizFeedback from "@/components/QuizFeedback";
 import QuizAllCorrectOption from "@/components/QuizAllCorrectOption";
+import QuizSidebar from "@/components/QuizSidebar";
 const dummyImages = ["https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=1200&h=800&fit=crop", "https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=1200&h=800&fit=crop", "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1200&h=800&fit=crop", "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1200&h=800&fit=crop"];
 const getAnnotationDimensions = () => {
   const screenW = window.innerWidth;
@@ -59,10 +60,9 @@ function getRandomOptions(correct, allIssues) {
   return options.sort(() => Math.random() - 0.5);
 }
 const Users: React.FC = () => {
-  const [{
-    width: IMAGE_WIDTH,
-    height: IMAGE_HEIGHT
-  }, setDims] = React.useState(getAnnotationDimensions());
+  const [{ width: IMAGE_WIDTH, height: IMAGE_HEIGHT }, setDims] = React.useState(
+    getAnnotationDimensions()
+  );
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [revealedBoxes, setRevealedBoxes] = useState({});
   const [answeredBoxes, setAnsweredBoxes] = useState({});
@@ -71,6 +71,9 @@ const Users: React.FC = () => {
   const [feedbackVisible, setFeedbackVisible] = useState(false);
   const [lockedUI, setLockedUI] = useState(false);
   const [allCorrectAnswered, setAllCorrectAnswered] = React.useState(false);
+  // New: track per-box feedback for sidebar ("green"/"red")
+  const [feedbackBoxes, setFeedbackBoxes] = React.useState<{ [id: string]: "green" | "red" | undefined }>({});
+
   React.useEffect(() => {
     function handleResize() {
       setDims(getAnnotationDimensions());
@@ -79,7 +82,9 @@ const Users: React.FC = () => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
   const imageUrl = dummyImages[currentImageIndex];
-  const boundingBoxes = useSelector((state: RootState) => state.annotation.annotations[imageUrl] || []);
+  const boundingBoxes = useSelector(
+    (state: RootState) => state.annotation.annotations[imageUrl] || []
+  );
   // Support custom issues defined for this image
   const allIssues = React.useMemo(() => {
     const labels = boundingBoxes.map(b => b.issue);
@@ -99,6 +104,7 @@ const Users: React.FC = () => {
     setFeedbackVisible(false);
     setLockedUI(false);
     setAllCorrectAnswered(false);
+    setFeedbackBoxes({}); // Reset sidebar feedback
   }, [currentImageIndex, imageUrl]);
   const handleBoxReveal = hiddenBox => {
     setRevealedBoxes(prev => ({
@@ -122,12 +128,17 @@ const Users: React.FC = () => {
     setLockedUI(true);
     setFeedback({
       correct: wasCorrect,
-      label: wasCorrect ? "Correct!" : "Wrong, try again"
+      label: wasCorrect ? "Correct!" : "Wrong, try again",
     });
     setFeedbackVisible(true);
     setAnsweredBoxes(prev => ({
       ...prev,
-      [quizForBox.box.id]: true
+      [quizForBox.box.id]: true,
+    }));
+    // Set sidebar feedback color
+    setFeedbackBoxes(prev => ({
+      ...prev,
+      [quizForBox.box.id]: wasCorrect ? "green" : "red",
     }));
     setQuizForBox(null);
     if (wasCorrect) {
@@ -135,14 +146,11 @@ const Users: React.FC = () => {
         confetti({
           particleCount: 180,
           spread: 90,
-          origin: {
-            y: 0.5
-          }
+          origin: { y: 0.5 },
         });
       }, 200);
     }
 
-    // Hide feedback after 1s, or dismiss on click
     const timeout = setTimeout(() => {
       setFeedback(null);
       setFeedbackVisible(false);
@@ -153,21 +161,34 @@ const Users: React.FC = () => {
       setFeedback(null);
       setFeedbackVisible(false);
       setLockedUI(false);
-      window.removeEventListener('mousedown', handleClick, true);
+      window.removeEventListener("mousedown", handleClick, true);
     };
-    window.addEventListener('mousedown', handleClick, true);
+    window.addEventListener("mousedown", handleClick, true);
   };
   const handleAllCorrect = (wasCorrect: boolean) => {
     setLockedUI(true);
     setFeedback({
       correct: wasCorrect,
-      label: wasCorrect ? "Correct! No issues found!" : "Wrong! There actually are issues in this image."
+      label: wasCorrect
+        ? "Correct! No issues found!"
+        : "Wrong! There actually are issues in this image.",
     });
     setFeedbackVisible(true);
     setAllCorrectAnswered(true);
     setQuizForBox(null);
 
-    // Feedback logic: always reset after 1s or on click
+    // If user is wrong, mark all boxes as red in sidebar
+    if (!wasCorrect && boundingBoxes.length > 0) {
+      const newFeedback: any = {};
+      for (const box of boundingBoxes) {
+        newFeedback[box.id] = "red";
+      }
+      setFeedbackBoxes(newFeedback);
+      setAnsweredBoxes(
+        Object.fromEntries(boundingBoxes.map((b) => [b.id, true]))
+      );
+    }
+
     const timeout = setTimeout(() => {
       setFeedback(null);
       setFeedbackVisible(false);
@@ -178,9 +199,9 @@ const Users: React.FC = () => {
       setFeedback(null);
       setFeedbackVisible(false);
       setLockedUI(false);
-      window.removeEventListener('mousedown', handleClick, true);
+      window.removeEventListener("mousedown", handleClick, true);
     };
-    window.addEventListener('mousedown', handleClick, true);
+    window.addEventListener("mousedown", handleClick, true);
 
     // If correct, optionally trigger confetti etc.
     if (wasCorrect) {
@@ -188,7 +209,7 @@ const Users: React.FC = () => {
         confetti({
           particleCount: 120,
           spread: 78,
-          origin: { y: 0.5 }
+          origin: { y: 0.5 },
         });
       }, 200);
     }
@@ -196,7 +217,8 @@ const Users: React.FC = () => {
 
   // True if all boxes answered for this image OR allCorrectAnswered
   const canNext =
-    (boundingBoxes.length > 0 && Object.keys(answeredBoxes).length === boundingBoxes.length) ||
+    (boundingBoxes.length > 0 &&
+      Object.keys(answeredBoxes).length === boundingBoxes.length) ||
     (boundingBoxes.length === 0 && allCorrectAnswered);
 
   const nextImage = () => {
@@ -207,15 +229,16 @@ const Users: React.FC = () => {
 
   // See if all the bounding boxes are processed for the last image
   const lastImage = currentImageIndex === dummyImages.length - 1;
-  return <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900" style={{
-    padding: 0
-  }} // remove excess padding
-  >
-      <div style={{
-      maxWidth: IMAGE_WIDTH + 64,
-      minHeight: IMAGE_HEIGHT + 80,
-      margin: 0
-    }} className="relative w-full flex flex-col items-center justify-center mt-14">
+  return (
+    <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
+      <div
+        style={{
+          maxWidth: IMAGE_WIDTH + 64,
+          minHeight: IMAGE_HEIGHT + 80,
+          margin: 0,
+        }}
+        className="relative w-full flex flex-col items-center justify-center mt-14"
+      >
         <div className="mb-3 w-full flex flex-row items-center justify-between px-6">
           <h1 className="text-2xl font-bold text-gradient bg-gradient-to-r from-emerald-400 to-pink-400 bg-clip-text text-transparent">
             User Annotation Quiz
@@ -224,8 +247,14 @@ const Users: React.FC = () => {
             Image {currentImageIndex + 1} of {dummyImages.length}
           </div>
         </div>
-        <div className="flex flex-col items-center justify-center w-full">
-          <div className="relative">
+        <div className="flex flex-row w-full gap-5 items-start">
+          <div className="flex-shrink-0 w-[260px]">
+            <QuizSidebar
+              boundingBoxes={boundingBoxes}
+              feedbackBoxes={feedbackBoxes}
+            />
+          </div>
+          <div className="flex flex-col items-center justify-center w-full relative">
             <QuizImage
               imageUrl={imageUrl}
               boundingBoxes={boundingBoxes}
@@ -233,8 +262,8 @@ const Users: React.FC = () => {
               answeredBoxes={answeredBoxes}
               onBoxReveal={handleBoxReveal}
               imageDims={{
-                width: 900, // Match annotation screen
-                height: 600
+                width: 900,
+                height: 600,
               }}
               lockedUI={lockedUI}
               quizForBox={quizForBox}
@@ -256,24 +285,24 @@ const Users: React.FC = () => {
                 setLockedUI(false);
               }}
             />
-
-            {/* "Everything is correct" option */}
-            {boundingBoxes.length === 0 && !allCorrectAnswered && (
-              <QuizAllCorrectOption
-                hasBoundingBoxes={false}
-                lockedUI={lockedUI}
-                onAllCorrect={handleAllCorrect}
-              />
-            )}
-            {/* Cheat-detection: If the user tries to trigger all-correct on a non-empty image, can show a similar option if wanted, but requirement is for images with 0 bounding boxes only */}
           </div>
         </div>
-        {/* Next button */}
-        <div className="flex justify-end mt-6 w-full px-6">
+        {/* Next + All Correct button row */}
+        <div className="flex flex-row justify-end gap-3 mt-6 w-full px-6 items-center">
+          <Button
+            onClick={() =>
+              handleAllCorrect(boundingBoxes.length === 0)
+            }
+            disabled={lockedUI}
+            className="px-6 py-2 rounded-lg text-lg bg-blue-500 hover:bg-blue-600 text-white"
+            variant="default"
+          >
+            Everything is correct in this image
+          </Button>
           <Button
             onClick={nextImage}
             disabled={!canNext || lastImage}
-            className={`px-6 py-2 rounded-lg text-lg 
+            className={`px-6 py-2 rounded-lg text-lg
               ${canNext && !lastImage ? "bg-green-500 hover:bg-green-600 text-white" : ""}
             `}
             variant={canNext && !lastImage ? "default" : "secondary"}
@@ -282,6 +311,7 @@ const Users: React.FC = () => {
           </Button>
         </div>
       </div>
-    </div>;
+    </div>
+  );
 };
 export default Users;
