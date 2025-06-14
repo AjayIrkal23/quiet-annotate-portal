@@ -176,19 +176,29 @@ const Annotation: React.FC = () => {
     if (!currentBox) return;
 
     // Basic validation: box must have some size
-    if (Math.abs(currentBox.width!) < 5 || Math.abs(currentBox.height!) < 5) {
+    if (
+      currentBox.width === undefined ||
+      currentBox.height === undefined ||
+      currentBox.x === undefined ||
+      currentBox.y === undefined ||
+      Math.abs(currentBox.width) < 5 ||
+      Math.abs(currentBox.height) < 5
+    ) {
       setCurrentBox(null);
       return;
     }
 
-    // Save box with NO issue yet, open dialog to select issue!
-    setPendingBox({
-      ...currentBox,
-      width: currentBox.width!,
-      height: currentBox.height!,
-      issue: "", // wait for selection!
+    // Build newBox with all fields required
+    const newPendingBox: BoundingBox = {
       id: currentBox.id || uuidv4(),
-    });
+      x: currentBox.x,
+      y: currentBox.y,
+      width: currentBox.width,
+      height: currentBox.height,
+      issue: "", // will be set by IssueDialog
+    };
+
+    setPendingBox(newPendingBox);
     setCurrentBox(null);
     setIssueDialogOpen(true);
   };
