@@ -21,6 +21,15 @@ interface BoundingBox {
   issue: string;
 }
 
+interface CurrentBox {
+  id?: string;
+  x?: number;
+  y?: number;
+  width?: number;
+  height?: number;
+  issue?: string;
+}
+
 const dummyImages = [
   "https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=1200&h=800&fit=crop",
   "https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=1200&h=800&fit=crop",
@@ -66,13 +75,7 @@ const Annotation: React.FC = () => {
     useState(getAnnotationDimensions());
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [issues, setIssues] = useState<Issue[]>(defaultIssues);
-  const [currentBox, setCurrentBox] = useState<{
-    x?: number;
-    y?: number;
-    width?: number;
-    height?: number;
-    issue?: string;
-  } | null>(null);
+  const [currentBox, setCurrentBox] = useState<CurrentBox | null>(null);
   const imageRef = useRef<HTMLImageElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [screenW, setScreenW] = React.useState(window.innerWidth);
@@ -150,7 +153,7 @@ const Annotation: React.FC = () => {
 
   const startDrawing = (x: number, y: number) => {
     setCurrentBox({
-      id: uuidv4(),
+      id: uuidv4(), // id is now in the type
       x,
       y,
       width: 0,
