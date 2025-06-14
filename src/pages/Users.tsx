@@ -27,6 +27,30 @@ const defaultIssues = [
   { value: "other", label: "Other Issue", color: "#6b7280" },
 ];
 
+// Use the same dimension calculation as annotation manager
+function getAnnotationDimensions() {
+  const screenW = window.innerWidth;
+  const screenH = window.innerHeight;
+
+  // Use as MUCH space as possible, but maintain aspect ratio 4:3
+  const MAX_WIDTH = Math.min(screenW - 64, 1152);
+  const MAX_HEIGHT = Math.min(screenH - 112, 864);
+  const ASPECT_RATIO = 4 / 3;
+
+  let width = MAX_WIDTH, height = MAX_HEIGHT;
+
+  if (width / height > ASPECT_RATIO) {
+    width = height * ASPECT_RATIO;
+  } else {
+    height = width / ASPECT_RATIO;
+  }
+
+  return {
+    width: Math.round(width),
+    height: Math.round(height),
+  };
+}
+
 function getRandomOptions(correct, allIssues) {
   let options = allIssues.filter(i => i.value !== correct.value);
   options = options.sort(() => Math.random() - 0.5).slice(0, 3);
@@ -44,6 +68,9 @@ const Users: React.FC = () => {
   const imageUrl = dummyImages[currentImageIndex];
   const boundingBoxes = allAnnotations[imageUrl] || [];
 
+  // Use the same dimensions as annotation manager
+  const [{ width: IMAGE_WIDTH, height: IMAGE_HEIGHT }, setDims] = useState(getAnnotationDimensions());
+
   // State for quiz/game mechanics
   const [revealedBoxes, setRevealedBoxes] = useState<{ [id: string]: boolean }>({});
   const [answeredBoxes, setAnsweredBoxes] = useState<{ [id: string]: boolean }>({});
@@ -56,10 +83,15 @@ const Users: React.FC = () => {
 
   // Responsive: get window width to determine mobile status
   const [screenW, setScreenW] = useState(window.innerWidth);
+  
+  // Update dimensions on resize
   useEffect(() => {
-    const onResize = () => setScreenW(window.innerWidth);
-    window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
+    const handleResize = () => {
+      setScreenW(window.innerWidth);
+      setDims(getAnnotationDimensions());
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   // Reset all quiz/game state when image changes
@@ -255,12 +287,12 @@ const Users: React.FC = () => {
             </div>
             <div className="flex justify-center">
               <div className="relative bg-gray-900 rounded-xl overflow-hidden border border-gray-600" style={{
-                width: 900,
-                height: 600
+                width: IMAGE_WIDTH,
+                height: IMAGE_HEIGHT
               }}>
                 <QuizImage imageUrl={imageUrl} boundingBoxes={boundingBoxes} revealedBoxes={revealedBoxes} answeredBoxes={answeredBoxes} onBoxReveal={handleBoxReveal} imageDims={{
-                  width: 900,
-                  height: 600
+                  width: IMAGE_WIDTH,
+                  height: IMAGE_HEIGHT
                 }} lockedUI={lockedUI} quizForBox={quizForBox} feedbackVisible={feedbackVisible} />
                 <QuizOptions quizForBox={quizForBox} onAnswer={handleAnswer} lockedUI={lockedUI} />
                 <QuizFeedback visible={feedbackVisible && feedback !== null} correct={!!feedback?.correct} onDismiss={() => {
