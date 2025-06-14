@@ -1,6 +1,10 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { Trash2, Save, RotateCcw, Image as ImageIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 import IssueDialog from '../components/IssueDialog';
+import { useDispatch, useSelector } from "react-redux";
+import { saveAnnotationForImage, clearAnnotationsForImage } from "../store/annotationSlice";
+import { RootState } from "../store/store";
+import { useToast } from "@/hooks/use-toast";
 
 interface BoundingBox {
   id: string;
@@ -141,12 +145,44 @@ const Annotation = () => {
     setBoundingBoxes([]);
   };
 
+  const dispatch = useDispatch();
+  const { toast } = useToast();
+
+  // Use currentImageIndex as imageId, or you can use dummyImages[currentImageIndex] for more robustness.
+  const currentImageId = dummyImages[currentImageIndex];
+
+  // Fetch saved annotations from redux:
+  const savedBoxes = useSelector(
+    (state: RootState) => state.annotation.annotations[currentImageId] || []
+  );
+
+  // Load saved boxes whenever image changes
+  useEffect(() => {
+    setBoundingBoxes(savedBoxes);
+  }, [currentImageId, savedBoxes]);
+
+  // Save Handler
+  const handleSave = () => {
+    dispatch(saveAnnotationForImage({ imageId: currentImageId, boxes: boundingBoxes }));
+    toast({
+      title: "Annotations Saved",
+      description: `Bounding boxes saved for image ${currentImageIndex + 1}`,
+    });
+  };
+
+  // Clear all annotations for all images
+  const handleClearAll = () => {
+    setBoundingBoxes([]);
+    dispatch(saveAnnotationForImage({ imageId: currentImageId, boxes: [] }));
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-4 lg:p-6">
       {/* Header */}
       <div className="mb-6">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div className="flex items-center space-x-3">
+            {/* Remove AnnotateAI icon/name if still left, just the icon if wanted */}
             <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-600 rounded-lg flex items-center justify-center">
               <ImageIcon className="w-5 h-5 text-white" />
             </div>
@@ -160,13 +196,16 @@ const Annotation = () => {
           
           <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
             <button 
-              onClick={() => setBoundingBoxes([])} 
+              onClick={handleClearAll} 
               className="flex items-center space-x-2 bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-all duration-200 w-full sm:w-auto justify-center"
             >
               <RotateCcw className="w-4 h-4" />
               <span>Clear All</span>
             </button>
-            <button className="flex items-center space-x-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-6 py-2 rounded-lg transition-all duration-200 transform hover:scale-105 w-full sm:w-auto justify-center">
+            <button
+              onClick={handleSave}
+              className="flex items-center space-x-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-6 py-2 rounded-lg transition-all duration-200 transform hover:scale-105 w-full sm:w-auto justify-center"
+            >
               <Save className="w-4 h-4" />
               <span>Save Annotations</span>
             </button>
