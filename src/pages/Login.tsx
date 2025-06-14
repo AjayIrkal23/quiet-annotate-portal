@@ -1,6 +1,6 @@
 
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,6 +9,16 @@ const Login: React.FC = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Check if user is already logged in
+  useEffect(() => {
+    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+    if (isLoggedIn) {
+      const from = location.state?.from?.pathname || '/';
+      navigate(from, { replace: true });
+    }
+  }, [navigate, location]);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -16,7 +26,10 @@ const Login: React.FC = () => {
     if (username.trim() && password.trim()) {
       localStorage.setItem('isLoggedIn', 'true');
       localStorage.setItem('username', username);
-      navigate('/');
+      
+      // Redirect to the page they were trying to access, or dashboard
+      const from = location.state?.from?.pathname || '/';
+      navigate(from, { replace: true });
     }
   };
 

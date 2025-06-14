@@ -1,7 +1,7 @@
 
 import React, { useRef, useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { Home, Upload, Image, Trophy, BookOpen } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Home, Upload, Image, Trophy, BookOpen, LogOut } from 'lucide-react';
 import { createPortal } from 'react-dom';
 
 // Floating sidebar tooltip as a portal to <body>
@@ -43,19 +43,26 @@ const navItems = [
 
 const Navigation = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const [tooltip, setTooltip] = useState<{
     rect: DOMRect | null;
     label: string | null;
   }>({ rect: null, label: null });
 
+  const handleLogout = () => {
+    localStorage.removeItem('isLoggedIn');
+    localStorage.removeItem('username');
+    navigate('/login');
+  };
+
   return (
-    <nav className="bg-gray-900/95 backdrop-blur-sm border-r border-gray-700/50 w-16 min-h-screen p-3 flex-shrink-0 z-[51]">
+    <nav className="bg-gray-900/95 backdrop-blur-sm border-r border-gray-700/50 w-16 min-h-screen p-3 flex-shrink-0 z-[51] flex flex-col justify-between">
       {/* Navigation Items */}
       <div className="space-y-3 mt-6">
         {navItems.map(({ path, icon: Icon, label }) => {
           const ref = useRef<HTMLAnchorElement>(null);
-
           const isActive = location.pathname === path;
+          
           return (
             <div
               key={path}
@@ -92,6 +99,31 @@ const Navigation = () => {
             </div>
           );
         })}
+      </div>
+
+      {/* Logout Button */}
+      <div className="mb-6">
+        <div
+          onMouseEnter={(e) => setTooltip({ rect: e.currentTarget.getBoundingClientRect(), label: 'Logout' })}
+          onMouseLeave={() => setTooltip({ rect: null, label: null })}
+          className="relative"
+        >
+          <button
+            onClick={handleLogout}
+            className="group flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-200 text-gray-300 hover:bg-red-500/20 hover:text-red-400"
+            title="Logout"
+          >
+            <LogOut size={20} />
+          </button>
+          {tooltip.label === 'Logout' && tooltip.rect && (
+            <SidebarTooltip
+              targetRect={tooltip.rect}
+              show={!!tooltip.rect}
+            >
+              Logout
+            </SidebarTooltip>
+          )}
+        </div>
       </div>
     </nav>
   );
