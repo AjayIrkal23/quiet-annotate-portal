@@ -60,9 +60,10 @@ function getRandomOptions(correct, allIssues) {
   return options.sort(() => Math.random() - 0.5);
 }
 const Users: React.FC = () => {
-  const [{ width: IMAGE_WIDTH, height: IMAGE_HEIGHT }, setDims] = React.useState(
-    getAnnotationDimensions()
-  );
+  const [{
+    width: IMAGE_WIDTH,
+    height: IMAGE_HEIGHT
+  }, setDims] = React.useState(getAnnotationDimensions());
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [revealedBoxes, setRevealedBoxes] = useState({});
   const [answeredBoxes, setAnsweredBoxes] = useState({});
@@ -72,18 +73,20 @@ const Users: React.FC = () => {
   const [lockedUI, setLockedUI] = useState(false);
   const [allCorrectAnswered, setAllCorrectAnswered] = React.useState(false);
   // New: track per-box feedback for sidebar ("green"/"red")
-  const [feedbackBoxes, setFeedbackBoxes] = React.useState<{ [id: string]: "green" | "red" | undefined }>({});
+  const [feedbackBoxes, setFeedbackBoxes] = React.useState<{
+    [id: string]: "green" | "red" | undefined;
+  }>({});
   // Responsive screen width
   const [screenW, setScreenW] = React.useState(window.innerWidth);
   React.useEffect(() => {
-    function handleResize() { setScreenW(window.innerWidth); }
+    function handleResize() {
+      setScreenW(window.innerWidth);
+    }
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
   const imageUrl = dummyImages[currentImageIndex];
-  const boundingBoxes = useSelector(
-    (state: RootState) => state.annotation.annotations[imageUrl] || []
-  );
+  const boundingBoxes = useSelector((state: RootState) => state.annotation.annotations[imageUrl] || []);
   // Support custom issues defined for this image
   const allIssues = React.useMemo(() => {
     const labels = boundingBoxes.map(b => b.issue);
@@ -127,17 +130,17 @@ const Users: React.FC = () => {
     setLockedUI(true);
     setFeedback({
       correct: wasCorrect,
-      label: wasCorrect ? "Correct!" : "Wrong, try again",
+      label: wasCorrect ? "Correct!" : "Wrong, try again"
     });
     setFeedbackVisible(true);
     setAnsweredBoxes(prev => ({
       ...prev,
-      [quizForBox.box.id]: true,
+      [quizForBox.box.id]: true
     }));
     // Set sidebar feedback color
     setFeedbackBoxes(prev => ({
       ...prev,
-      [quizForBox.box.id]: wasCorrect ? "green" : "red",
+      [quizForBox.box.id]: wasCorrect ? "green" : "red"
     }));
     setQuizForBox(null);
     if (wasCorrect) {
@@ -145,11 +148,12 @@ const Users: React.FC = () => {
         confetti({
           particleCount: 180,
           spread: 90,
-          origin: { y: 0.5 },
+          origin: {
+            y: 0.5
+          }
         });
       }, 200);
     }
-
     const timeout = setTimeout(() => {
       setFeedback(null);
       setFeedbackVisible(false);
@@ -168,9 +172,7 @@ const Users: React.FC = () => {
     setLockedUI(true);
     setFeedback({
       correct: wasCorrect,
-      label: wasCorrect
-        ? "Correct! No issues found!"
-        : "Wrong! There actually are issues in this image.",
+      label: wasCorrect ? "Correct! No issues found!" : "Wrong! There actually are issues in this image."
     });
     setFeedbackVisible(true);
     setAllCorrectAnswered(true);
@@ -183,11 +185,8 @@ const Users: React.FC = () => {
         newFeedback[box.id] = "red";
       }
       setFeedbackBoxes(newFeedback);
-      setAnsweredBoxes(
-        Object.fromEntries(boundingBoxes.map((b) => [b.id, true]))
-      );
+      setAnsweredBoxes(Object.fromEntries(boundingBoxes.map(b => [b.id, true])));
     }
-
     const timeout = setTimeout(() => {
       setFeedback(null);
       setFeedbackVisible(false);
@@ -208,18 +207,16 @@ const Users: React.FC = () => {
         confetti({
           particleCount: 120,
           spread: 78,
-          origin: { y: 0.5 },
+          origin: {
+            y: 0.5
+          }
         });
       }, 200);
     }
   };
 
   // True if all boxes answered for this image OR allCorrectAnswered
-  const canNext =
-    (boundingBoxes.length > 0 &&
-      Object.keys(answeredBoxes).length === boundingBoxes.length) ||
-    (boundingBoxes.length === 0 && allCorrectAnswered);
-
+  const canNext = boundingBoxes.length > 0 && Object.keys(answeredBoxes).length === boundingBoxes.length || boundingBoxes.length === 0 && allCorrectAnswered;
   const nextImage = () => {
     if (currentImageIndex < dummyImages.length - 1) {
       setCurrentImageIndex(currentImageIndex + 1);
@@ -233,9 +230,7 @@ const Users: React.FC = () => {
   const lastImage = currentImageIndex === dummyImages.length - 1;
   const firstImage = currentImageIndex === 0;
   const isMobile = screenW < 1024;
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-4 lg:p-6">
+  return <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-4 lg:p-6">
       {/* Header (Title + Actions) */}
       <div className="mb-6">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
@@ -245,7 +240,7 @@ const Users: React.FC = () => {
               <span className="text-white text-lg font-bold">👤</span>
             </div>
             <div>
-              <h1 className="font-bold bg-gradient-to-r from-emerald-400 to-pink-400 bg-clip-text text-transparent text-2xl">
+              <h1 className="font-bold  text-2xl text-white">
                 User Annotation Quiz
               </h1>
               <p className="text-gray-400 text-sm">
@@ -255,24 +250,10 @@ const Users: React.FC = () => {
           </div>
           {/* Button actions match Annotation Studio */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
-            <Button
-              onClick={() =>
-                handleAllCorrect(boundingBoxes.length === 0)
-              }
-              disabled={lockedUI}
-              className="flex items-center bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg text-base font-semibold transition-all w-full sm:w-auto"
-              variant="default"
-            >
+            <Button onClick={() => handleAllCorrect(boundingBoxes.length === 0)} disabled={lockedUI} className="flex items-center bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg text-base font-semibold transition-all w-full sm:w-auto" variant="default">
               Everything is correct in this image
             </Button>
-            <Button
-              onClick={nextImage}
-              disabled={!canNext || lastImage}
-              className={`flex items-center px-6 py-2 rounded-lg text-base font-semibold transition-all w-full sm:w-auto ${
-                canNext && !lastImage ? "bg-green-500 hover:bg-green-600 text-white" : ""
-              }`}
-              variant={canNext && !lastImage ? "default" : "secondary"}
-            >
+            <Button onClick={nextImage} disabled={!canNext || lastImage} className={`flex items-center px-6 py-2 rounded-lg text-base font-semibold transition-all w-full sm:w-auto ${canNext && !lastImage ? "bg-green-500 hover:bg-green-600 text-white" : ""}`} variant={canNext && !lastImage ? "default" : "secondary"}>
               Next
               <ChevronRight className="w-4 h-4 ml-1" />
             </Button>
@@ -283,10 +264,7 @@ const Users: React.FC = () => {
       <div className="flex flex-col xl:flex-row gap-6">
         {/* Sidebar - bounding boxes */}
         <div className="xl:w-80 w-full order-2 xl:order-1 mb-6 xl:mb-0">
-          <QuizSidebar
-            boundingBoxes={boundingBoxes}
-            feedbackBoxes={feedbackBoxes}
-          />
+          <QuizSidebar boundingBoxes={boundingBoxes} feedbackBoxes={feedbackBoxes} />
         </div>
         {/* Main Canvas - quiz image + options */}
         <div className="flex-1 order-1 xl:order-2">
@@ -299,12 +277,7 @@ const Users: React.FC = () => {
                 Image {currentImageIndex + 1} of {dummyImages.length}
               </div>
               <div className="flex items-center space-x-2">
-                <Button
-                  onClick={previousImage}
-                  disabled={firstImage}
-                  className="flex items-center bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded-lg transition-all duration-200"
-                  variant="secondary"
-                >
+                <Button onClick={previousImage} disabled={firstImage} className="flex items-center bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded-lg transition-all duration-200" variant="secondary">
                   <ChevronLeft className="w-4 h-4 mr-1" />
                   Previous
                 </Button>
@@ -312,44 +285,25 @@ const Users: React.FC = () => {
               </div>
             </div>
             <div className="flex justify-center">
-              <div
-                className="relative bg-gray-900 rounded-xl overflow-hidden border border-gray-600"
-                style={{ width: 900, height: 600 }}
-              >
-                <QuizImage
-                  imageUrl={imageUrl}
-                  boundingBoxes={boundingBoxes}
-                  revealedBoxes={revealedBoxes}
-                  answeredBoxes={answeredBoxes}
-                  onBoxReveal={handleBoxReveal}
-                  imageDims={{
-                    width: 900,
-                    height: 600,
-                  }}
-                  lockedUI={lockedUI}
-                  quizForBox={quizForBox}
-                  feedbackVisible={feedbackVisible}
-                />
-                <QuizOptions
-                  quizForBox={quizForBox}
-                  onAnswer={handleAnswer}
-                  lockedUI={lockedUI}
-                />
-                <QuizFeedback
-                  visible={feedbackVisible && feedback !== null}
-                  correct={!!feedback?.correct}
-                  onDismiss={() => {
-                    setFeedback(null);
-                    setFeedbackVisible(false);
-                    setLockedUI(false);
-                  }}
-                />
+              <div className="relative bg-gray-900 rounded-xl overflow-hidden border border-gray-600" style={{
+              width: 900,
+              height: 600
+            }}>
+                <QuizImage imageUrl={imageUrl} boundingBoxes={boundingBoxes} revealedBoxes={revealedBoxes} answeredBoxes={answeredBoxes} onBoxReveal={handleBoxReveal} imageDims={{
+                width: 900,
+                height: 600
+              }} lockedUI={lockedUI} quizForBox={quizForBox} feedbackVisible={feedbackVisible} />
+                <QuizOptions quizForBox={quizForBox} onAnswer={handleAnswer} lockedUI={lockedUI} />
+                <QuizFeedback visible={feedbackVisible && feedback !== null} correct={!!feedback?.correct} onDismiss={() => {
+                setFeedback(null);
+                setFeedbackVisible(false);
+                setLockedUI(false);
+              }} />
               </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
-  );
+    </div>;
 };
 export default Users;
