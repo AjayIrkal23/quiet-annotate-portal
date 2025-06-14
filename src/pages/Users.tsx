@@ -6,8 +6,8 @@ import { Button } from "@/components/ui/button";
 import QuizImage from "@/components/QuizImage";
 import QuizOptions from "@/components/QuizOptions";
 import QuizFeedback from "@/components/QuizFeedback";
-import QuizAllCorrectOption from "@/components/QuizAllCorrectOption";
 import QuizSidebar from "@/components/QuizSidebar";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 const dummyImages = ["https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=1200&h=800&fit=crop", "https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=1200&h=800&fit=crop", "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1200&h=800&fit=crop", "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1200&h=800&fit=crop"];
 const getAnnotationDimensions = () => {
   const screenW = window.innerWidth;
@@ -73,6 +73,7 @@ const Users: React.FC = () => {
   const [allCorrectAnswered, setAllCorrectAnswered] = React.useState(false);
   // New: track per-box feedback for sidebar ("green"/"red")
   const [feedbackBoxes, setFeedbackBoxes] = React.useState<{ [id: string]: "green" | "red" | undefined }>({});
+  // Responsive screen width
   const [screenW, setScreenW] = React.useState(window.innerWidth);
   React.useEffect(() => {
     function handleResize() { setScreenW(window.innerWidth); }
@@ -224,96 +225,128 @@ const Users: React.FC = () => {
       setCurrentImageIndex(currentImageIndex + 1);
     }
   };
-
-  // See if all the bounding boxes are processed for the last image
+  const previousImage = () => {
+    if (currentImageIndex > 0) {
+      setCurrentImageIndex(currentImageIndex - 1);
+    }
+  };
   const lastImage = currentImageIndex === dummyImages.length - 1;
+  const firstImage = currentImageIndex === 0;
   const isMobile = screenW < 1024;
+
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
-      <div
-        style={{
-          maxWidth: isMobile ? "100vw" : IMAGE_WIDTH + 64,
-          minHeight: isMobile ? undefined : IMAGE_HEIGHT + 80,
-          margin: 0,
-        }}
-        className="relative w-full flex flex-col items-center justify-center mt-10 md:mt-14"
-      >
-        <div className="mb-3 w-full flex flex-row items-center justify-between px-2 md:px-6">
-          <h1 className="text-2xl font-bold text-gradient bg-gradient-to-r from-emerald-400 to-pink-400 bg-clip-text text-transparent">
-            User Annotation Quiz
-          </h1>
-          <div className="text-sm text-gray-400">
-            Image {currentImageIndex + 1} of {dummyImages.length}
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-4 lg:p-6">
+      {/* Header (Title + Actions) */}
+      <div className="mb-6">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          <div className="flex items-center space-x-3">
+            <div className="w-8 h-8 bg-gradient-to-r from-emerald-400 to-pink-400 rounded-lg flex items-center justify-center">
+              {/* User icon */}
+              <span className="text-white text-lg font-bold">👤</span>
+            </div>
+            <div>
+              <h1 className="font-bold bg-gradient-to-r from-emerald-400 to-pink-400 bg-clip-text text-transparent text-2xl">
+                User Annotation Quiz
+              </h1>
+              <p className="text-gray-400 text-sm">
+                Try to guess the type of each bounding box
+              </p>
+            </div>
+          </div>
+          {/* Button actions match Annotation Studio */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
+            <Button
+              onClick={() =>
+                handleAllCorrect(boundingBoxes.length === 0)
+              }
+              disabled={lockedUI}
+              className="flex items-center bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg text-base font-semibold transition-all w-full sm:w-auto"
+              variant="default"
+            >
+              Everything is correct in this image
+            </Button>
+            <Button
+              onClick={nextImage}
+              disabled={!canNext || lastImage}
+              className={`flex items-center px-6 py-2 rounded-lg text-base font-semibold transition-all w-full sm:w-auto ${
+                canNext && !lastImage ? "bg-green-500 hover:bg-green-600 text-white" : ""
+              }`}
+              variant={canNext && !lastImage ? "default" : "secondary"}
+            >
+              Next
+              <ChevronRight className="w-4 h-4 ml-1" />
+            </Button>
           </div>
         </div>
-        <div
-          className={
-            isMobile
-              ? "flex flex-col w-full gap-5 items-stretch"
-              : "flex flex-row w-full gap-5 items-start"
-          }
-        >
-          {/* Sidebar */}
-          <div className={isMobile ? "w-full order-2" : "flex-shrink-0 w-[260px] order-1"}>
-            <QuizSidebar
-              boundingBoxes={boundingBoxes}
-              feedbackBoxes={feedbackBoxes}
-            />
-          </div>
-          {/* Image/Quiz */}
-          <div className={isMobile ? "w-full flex flex-col items-center order-1" : "flex flex-col items-center justify-center w-full relative order-2"}>
-            <QuizImage
-              imageUrl={imageUrl}
-              boundingBoxes={boundingBoxes}
-              revealedBoxes={revealedBoxes}
-              answeredBoxes={answeredBoxes}
-              onBoxReveal={handleBoxReveal}
-              imageDims={{
-                width: 900,
-                height: 600,
-              }}
-              lockedUI={lockedUI}
-              quizForBox={quizForBox}
-              feedbackVisible={feedbackVisible}
-            />
-            <QuizOptions
-              quizForBox={quizForBox}
-              onAnswer={handleAnswer}
-              lockedUI={lockedUI}
-            />
-            <QuizFeedback
-              visible={feedbackVisible && feedback !== null}
-              correct={!!feedback?.correct}
-              onDismiss={() => {
-                setFeedback(null);
-                setFeedbackVisible(false);
-                setLockedUI(false);
-              }}
-            />
-          </div>
+      </div>
+
+      <div className="flex flex-col xl:flex-row gap-6">
+        {/* Sidebar - bounding boxes */}
+        <div className="xl:w-80 w-full order-2 xl:order-1 mb-6 xl:mb-0">
+          <QuizSidebar
+            boundingBoxes={boundingBoxes}
+            feedbackBoxes={feedbackBoxes}
+          />
         </div>
-        {/* Next + All Correct button row */}
-        <div className={`flex ${isMobile ? "flex-col gap-2 items-stretch" : "flex-row gap-3 justify-end items-center"} mt-6 w-full px-2 md:px-6`}>
-          <Button
-            onClick={() =>
-              handleAllCorrect(boundingBoxes.length === 0)
-            }
-            disabled={lockedUI}
-            className="px-6 py-2 rounded-lg text-lg bg-blue-500 hover:bg-blue-600 text-white"
-            variant="default"
-          >
-            Everything is correct in this image
-          </Button>
-          <Button
-            onClick={nextImage}
-            disabled={!canNext || lastImage}
-            className={`px-6 py-2 rounded-lg text-lg ${
-              canNext && !lastImage ? "bg-green-500 hover:bg-green-600 text-white" : ""
-            }`}
-            variant={canNext && !lastImage ? "default" : "secondary"}
-          >
-            Next Image
-          </Button>
+        {/* Main Canvas - quiz image + options */}
+        <div className="flex-1 order-1 xl:order-2">
+          <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl border border-gray-700/50 shadow-2xl p-4 lg:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-4">
+              <h2 className="text-lg font-bold text-white">
+                Image Quiz
+              </h2>
+              <div className="text-sm text-gray-400">
+                Image {currentImageIndex + 1} of {dummyImages.length}
+              </div>
+              <div className="flex items-center space-x-2">
+                <Button
+                  onClick={previousImage}
+                  disabled={firstImage}
+                  className="flex items-center bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded-lg transition-all duration-200"
+                  variant="secondary"
+                >
+                  <ChevronLeft className="w-4 h-4 mr-1" />
+                  Previous
+                </Button>
+                {/* The Next button for navigation is only in header now */}
+              </div>
+            </div>
+            <div className="flex justify-center">
+              <div
+                className="relative bg-gray-900 rounded-xl overflow-hidden border border-gray-600"
+                style={{ width: 900, height: 600 }}
+              >
+                <QuizImage
+                  imageUrl={imageUrl}
+                  boundingBoxes={boundingBoxes}
+                  revealedBoxes={revealedBoxes}
+                  answeredBoxes={answeredBoxes}
+                  onBoxReveal={handleBoxReveal}
+                  imageDims={{
+                    width: 900,
+                    height: 600,
+                  }}
+                  lockedUI={lockedUI}
+                  quizForBox={quizForBox}
+                  feedbackVisible={feedbackVisible}
+                />
+                <QuizOptions
+                  quizForBox={quizForBox}
+                  onAnswer={handleAnswer}
+                  lockedUI={lockedUI}
+                />
+                <QuizFeedback
+                  visible={feedbackVisible && feedback !== null}
+                  correct={!!feedback?.correct}
+                  onDismiss={() => {
+                    setFeedback(null);
+                    setFeedbackVisible(false);
+                    setLockedUI(false);
+                  }}
+                />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
