@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../store/store";
@@ -5,6 +6,7 @@ import { saveAnnotationForImage } from "../store/annotationSlice";
 import { v4 as uuidv4 } from 'uuid';
 import AnnotationCanvas from "@/components/AnnotationCanvas";
 import AnnotationSidebar from "@/components/AnnotationSidebar";
+import IssueDialog from "@/components/IssueDialog";
 
 interface Issue {
   value: string;
@@ -76,6 +78,9 @@ const Annotation: React.FC = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [issues, setIssues] = useState<Issue[]>(defaultIssues);
   const [currentBox, setCurrentBox] = useState<CurrentBox | null>(null);
+  const [pendingBox, setPendingBox] = useState<BoundingBox | null>(null); // shown in dialog before adding
+  const [issueDialogOpen, setIssueDialogOpen] = useState(false);
+
   const imageRef = useRef<HTMLImageElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -152,7 +157,7 @@ const Annotation: React.FC = () => {
       y,
       width: 0,
       height: 0,
-      issue: issues[0].value,
+      // issue: issues[0].value, // Don't assign yet
     });
   };
 
@@ -176,18 +181,16 @@ const Annotation: React.FC = () => {
       return;
     }
 
-    const newBox = {
+    // Save box with NO issue yet, open dialog to select issue!
+    setPendingBox({
       ...currentBox,
       width: currentBox.width!,
       height: currentBox.height!,
-    } as BoundingBox;
-
-    // Update Redux store with new bounding box
-    const imageId = dummyImages[currentImageIndex];
-    const updatedBoxes = [...boundingBoxes, newBox];
-    saveBoxesForCurrentImage(updatedBoxes);
-
-    setCurrentBox(null); // Clear current box
+      issue: "", // wait for selection!
+      id: currentBox.id || uuidv4(),
+    });
+    setCurrentBox(null);
+    setIssueDialogOpen(true);
   };
 
   const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -214,6 +217,43 @@ const Annotation: React.FC = () => {
     const imageId = dummyImages[currentImageIndex];
     const updatedBoxes = boundingBoxes.filter((box) => box.id !== id);
     dispatch(saveAnnotationForImage({ imageId, boxes: updatedBoxes }));
+  };
+
+  // ---- IssueDialog handlers ----
+  const handleSelectIssue = (selectedIssue: string) => {
+    if (!pendingBox) return;
+
+    const boxWithIssue: BoundingBox = {
+      ...pendingBox,
+      issue: selectedIssue,
+    };
+
+    const updatedBoxes = [...boundingBoxes, boxWithIssue];
+    saveBoxesForCurrentImage(updatedBoxes);
+
+    setPendingBox(null);
+    setIssueDialogOpen(false);
+  };
+
+  const handleAddIssue = (newIssue: Issue) => {
+    setIssues((prev) => [...prev, newIssue]);
+  };
+
+  const handleRemoveIssue = (issueValue: string) => {
+    // Prevent removal of built-in issues
+    if (
+      [
+        "pothole",
+        "crack",
+        "debris",
+        "marking",
+        "sign",
+        "other",
+      ].includes(issueValue)
+    )
+      return;
+
+    setIssues((prev) => prev.filter((i) => i.value !== issueValue));
   };
 
   // Instead, infer isMobile from IMAGE_WIDTH:
@@ -284,8 +324,26 @@ const Annotation: React.FC = () => {
           />
         </div>
       </div>
+
+      {/* Issue type selection dialog */}
+      <IssueDialog
+        open={issueDialogOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            setIssueDialogOpen(false);
+            setPendingBox(null);
+          }
+        }}
+        onSelectIssue={handleSelectIssue}
+        issues={issues}
+        onAddIssue={handleAddIssue}
+        onRemoveIssue={handleRemoveIssue}
+      />
     </div>
   );
 };
 
 export default Annotation;
+
+// This file is getting too long! Consider refactoring into smaller components & hooks.
+
