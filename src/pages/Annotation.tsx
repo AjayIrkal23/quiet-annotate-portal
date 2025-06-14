@@ -137,12 +137,10 @@ const Annotation = () => {
 
   const nextImage = () => {
     setCurrentImageIndex(prev => (prev + 1) % dummyImages.length);
-    setBoundingBoxes([]);
   };
 
   const previousImage = () => {
     setCurrentImageIndex(prev => (prev - 1 + dummyImages.length) % dummyImages.length);
-    setBoundingBoxes([]);
   };
 
   const dispatch = useDispatch();
@@ -156,7 +154,8 @@ const Annotation = () => {
     (state: RootState) => state.annotation.annotations[currentImageId] || []
   );
 
-  // Load saved boxes whenever image changes
+  // FIX: Only reload boxes when currentImageId changes,
+  // and ONLY if savedBoxes is different from boundingBoxes
   useEffect(() => {
     setBoundingBoxes(savedBoxes);
   }, [currentImageId, savedBoxes]);
