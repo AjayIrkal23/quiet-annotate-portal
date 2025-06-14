@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../store/store";
@@ -7,6 +8,7 @@ import QuizImage from "@/components/QuizImage";
 import QuizOptions from "@/components/QuizOptions";
 import QuizFeedback from "@/components/QuizFeedback";
 import QuizSidebar from "@/components/QuizSidebar";
+import ScoreCard from "@/components/ScoreCard";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { setCurrentImageIndex, nextImage, previousImage } from "../store/imageNavSlice";
 
@@ -81,6 +83,10 @@ const Users: React.FC = () => {
   const [allCorrectAnswered, setAllCorrectAnswered] = useState(false);
   const [feedbackBoxes, setFeedbackBoxes] = useState<{ [id: string]: "green" | "red" | undefined }>({});
 
+  // Score tracking state
+  const [correctAnswers, setCorrectAnswers] = useState(0);
+  const [totalQuestions, setTotalQuestions] = useState(0);
+
   // Responsive: get window width to determine mobile status
   const [screenW, setScreenW] = useState(window.innerWidth);
   
@@ -142,6 +148,12 @@ const Users: React.FC = () => {
     }));
     setQuizForBox(null);
 
+    // Update score
+    setTotalQuestions(prev => prev + 1);
+    if (wasCorrect) {
+      setCorrectAnswers(prev => prev + 1);
+    }
+
     if (wasCorrect) {
       setTimeout(() => {
         confetti({
@@ -176,6 +188,12 @@ const Users: React.FC = () => {
     setFeedbackVisible(true);
     setAllCorrectAnswered(true);
     setQuizForBox(null);
+
+    // Update score
+    setTotalQuestions(prev => prev + 1);
+    if (wasCorrect) {
+      setCorrectAnswers(prev => prev + 1);
+    }
 
     // If user is wrong, mark all boxes as red in sidebar and all as answered
     if (!wasCorrect && boundingBoxes.length > 0) {
@@ -231,17 +249,20 @@ const Users: React.FC = () => {
     }
   };
 
+  // Calculate accuracy
+  const accuracy = totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 0;
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-4 lg:p-6">
       {/* Header (Title + Actions) */}
       <div className="mb-6">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
           <div className="flex items-center space-x-3">
             <div className="w-8 h-8 bg-gradient-to-r from-emerald-400 to-pink-400 rounded-lg flex items-center justify-center">
               <span className="text-white text-lg font-bold">👤</span>
             </div>
-            <div>
-              <h1 className="font-bold  text-2xl text-white">
+            <div className="flex-1">
+              <h1 className="font-bold text-2xl text-white">
                 User Annotation Quiz
               </h1>
               <p className="text-gray-400 text-sm">
@@ -249,12 +270,22 @@ const Users: React.FC = () => {
               </p>
             </div>
           </div>
-          {/* Button actions match Annotation Studio */}
+          
+          {/* Score Card */}
+          <div className="lg:w-64">
+            <ScoreCard
+              correctAnswers={correctAnswers}
+              totalQuestions={totalQuestions}
+              accuracy={accuracy}
+            />
+          </div>
+          
+          {/* Button actions */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
-            <Button onClick={() => handleAllCorrect(boundingBoxes.length === 0)} disabled={lockedUI} className="flex items-center bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg text-base font-semibold transition-all w-full sm:w-auto" variant="default">
+            <Button onClick={() => handleAllCorrect(boundingBoxes.length === 0)} disabled={lockedUI} className="flex items-center bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all w-full sm:w-auto" variant="default">
               Everything is correct in this image
             </Button>
-            <Button onClick={nextImg} disabled={!canNext || lastImage} className={`flex items-center px-6 py-2 rounded-lg text-base font-semibold transition-all w-full sm:w-auto ${canNext && !lastImage ? "bg-green-500 hover:bg-green-600 text-white" : ""}`} variant={canNext && !lastImage ? "default" : "secondary"}>
+            <Button onClick={nextImg} disabled={!canNext || lastImage} className={`flex items-center px-4 py-2 rounded-lg text-sm font-semibold transition-all w-full sm:w-auto ${canNext && !lastImage ? "bg-green-500 hover:bg-green-600 text-white" : ""}`} variant={canNext && !lastImage ? "default" : "secondary"}>
               Next
               <ChevronRight className="w-4 h-4 ml-1" />
             </Button>
@@ -278,11 +309,10 @@ const Users: React.FC = () => {
                 Image {currentImageIndex + 1} of {dummyImages.length}
               </div>
               <div className="flex items-center space-x-2">
-                <Button onClick={prevImg} disabled={firstImage} className="flex items-center bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded-lg transition-all duration-200" variant="secondary">
+                <Button onClick={prevImg} disabled={firstImage} className="flex items-center bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded-lg transition-all duration-200 text-sm" variant="secondary">
                   <ChevronLeft className="w-4 h-4 mr-1" />
                   Previous
                 </Button>
-                {/* The Next button for navigation is only in header now */}
               </div>
             </div>
             <div className="flex justify-center">

@@ -1,3 +1,4 @@
+
 import React from "react";
 import { useAnnotationManager, dummyImages } from "@/hooks/useAnnotationManager";
 import AnnotationCanvas from "@/components/AnnotationCanvas";
@@ -53,7 +54,7 @@ const Annotation: React.FC = () => {
               </span>
             </div>
             <div>
-              <h1 className="font-bold  text-2xl text-white">
+              <h1 className="font-bold text-2xl text-white">
                 Image Annotation
               </h1>
               <p className="text-gray-400 text-sm">

@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -13,6 +14,7 @@ import Annotation from "./pages/Annotation";
 import Leaderboard from "./pages/Leaderboard";
 import NotFound from "./pages/NotFound";
 import Users from "./pages/Users";
+import Login from "./pages/Login";
 
 const queryClient = new QueryClient();
 
@@ -33,6 +35,7 @@ const App = () => (
                   <Route path="/annotation" element={<Annotation />} />
                   <Route path="/leaderboard" element={<Leaderboard />} />
                   <Route path="/users" element={<Users />} />
+                  <Route path="/login" element={<Login />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </main>
