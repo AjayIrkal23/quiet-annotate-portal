@@ -1,5 +1,4 @@
-
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../store/store";
 import { saveAnnotationForImage } from "../store/annotationSlice";
@@ -60,10 +59,16 @@ export function useAnnotationManager() {
 
   const dispatch = useDispatch();
 
-  const boundingBoxes: BoundingBox[] = useSelector(
-    (state: RootState) =>
-      state.annotation.annotations[dummyImages[currentImageIndex]] || []
+  // Use useSelector to fetch the map of all annotations:
+  const allAnnotations = useSelector(
+    (state: RootState) => state.annotation.annotations
   );
+
+  // Memoize boundingBoxes for current image
+  const boundingBoxes: BoundingBox[] = useMemo(() => {
+    const imageId = dummyImages[currentImageIndex];
+    return allAnnotations[imageId] || [];
+  }, [allAnnotations, currentImageIndex]);
 
   // Save boxes to redux
   const saveBoxesForCurrentImage = useCallback(
