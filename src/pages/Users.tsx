@@ -1,12 +1,12 @@
 
-import React, { useState, useRef } from "react";
+import React, { useState } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "../store/store";
 import confetti from "canvas-confetti";
 import { Button } from "@/components/ui/button";
 import { Check, X } from "lucide-react";
 
-// Dummy images
+// Consistent dummy images
 const dummyImages = [
   "https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=1200&h=800&fit=crop",
   "https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=1200&h=800&fit=crop",
@@ -14,16 +14,24 @@ const dummyImages = [
   "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1200&h=800&fit=crop"
 ];
 
-const getImageDimensions = () => {
-  if (window.innerWidth >= 1536) { // 2xl screens
-    return { width: 1000, height: 700 };
-  } else if (window.innerWidth >= 1280) { // xl screens
-    return { width: 900, height: 650 };
-  } else if (window.innerWidth >= 1024) { // lg screens
-    return { width: 800, height: 600 };
+// Standardized image sizing, matching Annotation
+const getAnnotationDimensions = () => {
+  const screenW = window.innerWidth;
+  const screenH = window.innerHeight;
+
+  // Use as MUCH space as possible, but maintain aspect ratio.
+  // Assume target ratio ~4:3 (width:height)
+  const MAX_WIDTH = Math.min(screenW - 64, 1152); // 64px: extra margin for very large screens
+  const MAX_HEIGHT = Math.min(screenH - 112, 864); // 112px: extra vertical margins
+  const ASPECT_RATIO = 4 / 3;
+  let width = MAX_WIDTH, height = MAX_HEIGHT;
+  if (width / height > ASPECT_RATIO) {
+    width = height * ASPECT_RATIO;
   } else {
-    return { width: 700, height: 500 }; // default
+    height = width / ASPECT_RATIO;
   }
+  // Tailwind: always round to even values to avoid layout gaps
+  return { width: Math.round(width), height: Math.round(height) };
 };
 
 interface BoundingBox {
@@ -58,14 +66,23 @@ function getRandomOptions(correct: Issue, allIssues: Issue[]) {
 }
 
 const Users: React.FC = () => {
+  const [{ width: IMAGE_WIDTH, height: IMAGE_HEIGHT }, setDims] = React.useState(getAnnotationDimensions());
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const { width: IMAGE_WIDTH, height: IMAGE_HEIGHT } = getImageDimensions();
   const [revealedBoxes, setRevealedBoxes] = useState<{ [id: string]: boolean }>({});
   const [answeredBoxes, setAnsweredBoxes] = useState<{ [id: string]: boolean }>({});
   const [quizForBox, setQuizForBox] = useState<{ box: BoundingBox; options: Issue[]; correct: Issue } | null>(null);
   const [feedback, setFeedback] = useState<{ correct: boolean; label: string } | null>(null);
   const [feedbackVisible, setFeedbackVisible] = useState(false);
   const [lockedUI, setLockedUI] = useState(false);
+
+  // Responsive dimensions
+  React.useEffect(() => {
+    function handleResize() {
+      setDims(getAnnotationDimensions());
+    }
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const imageUrl = dummyImages[currentImageIndex];
   const boundingBoxes: BoundingBox[] = useSelector(
@@ -100,7 +117,6 @@ const Users: React.FC = () => {
         pointInBox(clickX, clickY, box)
     );
     if (hiddenBox) {
-      // Reveal box, show options
       setRevealedBoxes(prev => ({ ...prev, [hiddenBox.id]: true }));
       const correctIssue = issues.find(i => i.value === hiddenBox.issue)!;
       setQuizForBox({
@@ -111,7 +127,6 @@ const Users: React.FC = () => {
     }
   };
 
-  // Utility: is a point inside a bounding box
   function pointInBox(x: number, y: number, box: BoundingBox) {
     const left = Math.min(box.x, box.x + box.width);
     const top = Math.min(box.y, box.y + box.height);
@@ -120,7 +135,6 @@ const Users: React.FC = () => {
     return x >= left && x <= right && y >= top && y <= bottom;
   }
 
-  // Handle answer option
   const handleAnswer = (sel: Issue) => {
     if (!quizForBox) return;
     const wasCorrect = sel.value === quizForBox.correct.value;
@@ -153,7 +167,6 @@ const Users: React.FC = () => {
       setLockedUI(false);
     }, 1000);
 
-    // Allow dismiss by click
     const handleClick = () => {
       clearTimeout(timeout);
       setFeedback(null);
@@ -164,7 +177,7 @@ const Users: React.FC = () => {
     window.addEventListener('mousedown', handleClick, true);
   };
 
-  // All boxes must be revealed/answered to enable next
+  // Must answer all boxes to enable next
   const canNext =
     boundingBoxes.length > 0 &&
     Object.keys(answeredBoxes).length === boundingBoxes.length;
@@ -176,9 +189,19 @@ const Users: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-5 flex justify-center items-center">
-      <div className="w-full max-w-3xl bg-gray-900 rounded-2xl border border-gray-700/50 shadow-2xl p-5 relative">
-        <div className="mb-5 flex flex-col sm:flex-row sm:items-center sm:justify-between">
+    <div
+      className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900"
+      style={{ padding: 0 }} // remove excess padding
+    >
+      <div
+        className="relative w-full flex flex-col items-center justify-center"
+        style={{
+          maxWidth: IMAGE_WIDTH + 64, // 32px margin both sides
+          minHeight: IMAGE_HEIGHT + 80, // for controls and text
+          margin: 0,
+        }}
+      >
+        <div className="mb-3 w-full flex flex-row items-center justify-between px-6">
           <h1 className="text-2xl font-bold text-gradient bg-gradient-to-r from-emerald-400 to-pink-400 bg-clip-text text-transparent">
             User Annotation Quiz
           </h1>
@@ -186,10 +209,15 @@ const Users: React.FC = () => {
             Image {currentImageIndex + 1} of {dummyImages.length}
           </div>
         </div>
-        <div className="flex justify-center">
+        <div className="flex flex-col items-center justify-center w-full">
           <div
             className="relative"
-            style={{ width: IMAGE_WIDTH, height: IMAGE_HEIGHT }}
+            style={{
+              width: IMAGE_WIDTH,
+              height: IMAGE_HEIGHT,
+              boxShadow: "0 2px 32px 0 rgb(0 0 0 / 30%)",
+              borderRadius: 18,
+            }}
             onClick={handleImageClick}
             tabIndex={0}
           >
@@ -201,7 +229,7 @@ const Users: React.FC = () => {
               style={{ width: IMAGE_WIDTH, height: IMAGE_HEIGHT }}
             />
 
-            {/* Reveal only the boxes that have been found! */}
+            {/* Only show a revealed/answered bounding box with NO name */}
             {boundingBoxes.map(
               (box) =>
                 (revealedBoxes[box.id] || answeredBoxes[box.id]) && (
@@ -276,12 +304,12 @@ const Users: React.FC = () => {
               </div>
             )}
 
-            {/* Block overlay if unanswered */}
+            {/* Block overlay while not finished */}
             {!canNext && boundingBoxes.length > 0 && (
               <div className="absolute left-0 top-0 w-full h-full z-10 pointer-events-none" />
             )}
 
-            {/* If no boxes */}
+            {/* No boxes available */}
             {boundingBoxes.length === 0 && (
               <div className="absolute z-20 w-full h-full flex flex-col items-center justify-center bg-black/60 rounded-xl animate-fade-in">
                 <div className="text-white text-xl font-semibold mb-2">
@@ -294,9 +322,8 @@ const Users: React.FC = () => {
             )}
           </div>
         </div>
-
-        {/* Next btn, only if all completed */}
-        <div className="flex justify-end mt-6">
+        {/* Next button */}
+        <div className="flex justify-end mt-6 w-full px-6">
           <Button
             onClick={nextImage}
             disabled={!canNext || currentImageIndex === dummyImages.length - 1}
@@ -312,3 +339,4 @@ const Users: React.FC = () => {
 };
 
 export default Users;
+
