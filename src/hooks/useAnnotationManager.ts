@@ -59,25 +59,21 @@ export function useAnnotationManager() {
 
   const dispatch = useDispatch();
 
-  // Use useSelector to fetch the map of all annotations:
+  // Use Redux selector for bounding boxes for current image
   const allAnnotations = useSelector(
     (state: RootState) => state.annotation.annotations
   );
 
-  // Memoize boundingBoxes for current image
-  const boundingBoxes: BoundingBox[] = useMemo(() => {
-    const imageId = dummyImages[currentImageIndex];
-    return allAnnotations[imageId] || [];
-  }, [allAnnotations, currentImageIndex]);
+  // This is the canonical source for bounding boxes per-image, don't sync with local state
+  const imageId = dummyImages[currentImageIndex];
+  const boundingBoxes: BoundingBox[] = allAnnotations[imageId] || [];
 
-  // Save boxes to redux
+  // Save boxes for current image in redux store
   const saveBoxesForCurrentImage = useCallback(
     (boxes: BoundingBox[]) => {
-      if (!dummyImages || !dummyImages.length) return;
-      const imageId = dummyImages[currentImageIndex];
       dispatch(
         saveAnnotationForImage({
-          imageId,
+          imageId: dummyImages[currentImageIndex],
           boxes,
         })
       );
@@ -85,11 +81,12 @@ export function useAnnotationManager() {
     [currentImageIndex, dispatch]
   );
 
-  // Save pending box to redux if present
   const flushPendingBox = useCallback(() => {
     if (pendingBox && pendingBox.issue) {
+      // Always get latest boundingBoxes from Redux state
       const imageId = dummyImages[currentImageIndex];
-      const updatedBoxes = [...boundingBoxes, pendingBox];
+      const currentBoxes = (allAnnotations && allAnnotations[imageId]) || [];
+      const updatedBoxes = [...currentBoxes, pendingBox];
       dispatch(
         saveAnnotationForImage({
           imageId,
@@ -98,19 +95,18 @@ export function useAnnotationManager() {
       );
       setPendingBox(null);
     }
-  }, [pendingBox, boundingBoxes, currentImageIndex, dispatch]);
+  }, [pendingBox, allAnnotations, currentImageIndex, dispatch]);
 
   // Save on component unmount
   useEffect(() => {
-    // Only use the current bounding boxes for current image
     return () => {
-      // Grab the currently active bounding boxes just before unmount.
+      // Always flush pending
+      flushPendingBox();
+      // Save current state forcibly (gets handled in flush too, but safe)
       const imageId = dummyImages[currentImageIndex];
-      const latestBoxes =
-        (allAnnotations && allAnnotations[imageId]) || [];
+      const latestBoxes = (allAnnotations && allAnnotations[imageId]) || [];
       saveBoxesForCurrentImage(latestBoxes);
     };
-    // DO NOT place boundingBoxes/saveBoxesForCurrentImage in deps -- it's only for unmount!
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -150,7 +146,6 @@ export function useAnnotationManager() {
 
   const finishDrawing = () => {
     if (!currentBox) return;
-    // Box must have some size
     if (
       currentBox.width === undefined ||
       currentBox.height === undefined ||
@@ -201,7 +196,9 @@ export function useAnnotationManager() {
   // Save when going to next/prev image (flush pending first)
   const handleNextImage = () => {
     flushPendingBox();
-    saveBoxesForCurrentImage(boundingBoxes);
+    // update to latest boundingBoxes in Redux
+    const latestBoxes = (allAnnotations && allAnnotations[imageId]) || [];
+    saveBoxesForCurrentImage(latestBoxes);
     if (currentImageIndex < dummyImages.length - 1) {
       setCurrentImageIndex(currentImageIndex + 1);
     }
@@ -209,7 +206,8 @@ export function useAnnotationManager() {
 
   const handlePreviousImage = () => {
     flushPendingBox();
-    saveBoxesForCurrentImage(boundingBoxes);
+    const latestBoxes = (allAnnotations && allAnnotations[imageId]) || [];
+    saveBoxesForCurrentImage(latestBoxes);
     if (currentImageIndex > 0) {
       setCurrentImageIndex(currentImageIndex - 1);
     }
@@ -217,26 +215,32 @@ export function useAnnotationManager() {
 
   const handleGoToImage = (index: number) => {
     flushPendingBox();
-    saveBoxesForCurrentImage(boundingBoxes);
+    const goToImageId = dummyImages[index];
+    const latestBoxes = (allAnnotations && allAnnotations[goToImageId]) || [];
+    dispatch(saveAnnotationForImage({ imageId: goToImageId, boxes: latestBoxes }));
     setCurrentImageIndex(index);
   };
 
   // Delete box
   const handleDeleteBoundingBox = (id: string) => {
     const imageId = dummyImages[currentImageIndex];
-    const updatedBoxes = boundingBoxes.filter((box) => box.id !== id);
+    const currentBoxes = (allAnnotations && allAnnotations[imageId]) || [];
+    const updatedBoxes = currentBoxes.filter((box) => box.id !== id);
     dispatch(saveAnnotationForImage({ imageId, boxes: updatedBoxes }));
   };
 
   // ---- IssueDialog handlers ----
   const handleSelectIssue = (selectedIssue: string) => {
     if (!pendingBox) return;
+    const imageId = dummyImages[currentImageIndex];
+    // Always get latest boxes from redux, not from stale closure.
+    const baseBoxes = (allAnnotations && allAnnotations[imageId]) || [];
     const boxWithIssue: BoundingBox = {
       ...pendingBox,
       issue: selectedIssue,
     };
-    const updatedBoxes = [...boundingBoxes, boxWithIssue];
-    saveBoxesForCurrentImage(updatedBoxes);
+    const updatedBoxes = [...baseBoxes, boxWithIssue];
+    dispatch(saveAnnotationForImage({ imageId, boxes: updatedBoxes }));
 
     setPendingBox(null);
     setIssueDialogOpen(false);
