@@ -1,6 +1,8 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { Trash2, Save, RotateCcw, Image as ImageIcon, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Trash2, Save, RotateCcw, Image as ImageIcon } from 'lucide-react';
 import IssueDialog from '../components/IssueDialog';
+import AnnotationSidebar from "../components/AnnotationSidebar";
+import AnnotationCanvas from "../components/AnnotationCanvas";
 import { useDispatch, useSelector } from "react-redux";
 import { saveAnnotationForImage, clearAnnotationsForImage } from "../store/annotationSlice";
 import { RootState } from "../store/store";
@@ -215,134 +217,31 @@ const Annotation = () => {
       <div className="flex flex-col xl:flex-row gap-6">
         {/* Annotations List Sidebar */}
         <div className="xl:w-80 w-full order-2 xl:order-1">
-          <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-4 border border-gray-700/50">
-            <h3 className="text-lg font-bold text-white mb-4">Annotations ({boundingBoxes.length})</h3>
-            <div className="space-y-3 max-h-96 overflow-y-auto">
-              {boundingBoxes.length === 0 ? (
-                <div className="text-center py-4">
-                  <p className="text-gray-400 text-sm">No annotations yet</p>
-                  <p className="text-gray-500 text-xs">Click and drag to create</p>
-                </div>
-              ) : (
-                boundingBoxes.map((box) => {
-                  const issueData = issues.find(i => i.value === box.issue);
-                  return (
-                    <div key={box.id} className="bg-gray-700/50 rounded-lg p-3 border border-gray-600/50">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-3">
-                          <div 
-                            className="w-4 h-4 rounded-full border-2"
-                            style={{ borderColor: issueData?.color || '#ef4444' }}
-                          />
-                          <div>
-                            <p className="text-white font-medium text-sm">{issueData?.label || 'Unknown'}</p>
-                            <p className="text-gray-400 text-xs">
-                              {Math.round(box.width)}×{Math.round(box.height)}px
-                            </p>
-                          </div>
-                        </div>
-                        <button 
-                          onClick={() => deleteBoundingBox(box.id)} 
-                          className="text-red-400 hover:text-red-300 transition-colors"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-            </div>
-          </div>
+          <AnnotationSidebar
+            boundingBoxes={boundingBoxes}
+            issues={issues}
+            onDeleteBoundingBox={deleteBoundingBox}
+          />
         </div>
 
         {/* Main Canvas Area */}
         <div className="flex-1 order-1 xl:order-2">
-          <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl border border-gray-700/50 shadow-2xl p-4 lg:p-6">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-4">
-              <div className="flex items-center space-x-4">
-                <h2 className="text-lg font-bold text-white">Image Canvas</h2>
-                <div className="text-sm text-gray-400">
-                  Image {currentImageIndex + 1} of {dummyImages.length}
-                </div>
-              </div>
-              
-              {/* Image Navigation */}
-              <div className="flex items-center space-x-2">
-                <button 
-                  onClick={previousImage}
-                  className="flex items-center space-x-2 bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded-lg transition-all duration-200"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                  <span>Previous</span>
-                </button>
-                <button 
-                  onClick={nextImage}
-                  className="flex items-center space-x-2 bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded-lg transition-all duration-200"
-                >
-                  <span>Next</span>
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-            
-            <div className="flex justify-center">
-              <div className="relative bg-gray-900 rounded-xl overflow-hidden border border-gray-600" style={{ width: IMAGE_WIDTH, height: IMAGE_HEIGHT }}>
-                <img
-                  ref={imageRef}
-                  src={dummyImages[currentImageIndex]}
-                  alt="Annotation target"
-                  className="absolute inset-0 w-full h-full object-cover"
-                  style={{ width: IMAGE_WIDTH, height: IMAGE_HEIGHT }}
-                />
-                
-                <canvas
-                  ref={canvasRef}
-                  width={IMAGE_WIDTH}
-                  height={IMAGE_HEIGHT}
-                  className="absolute inset-0 cursor-crosshair"
-                  onMouseDown={handleMouseDown}
-                  onMouseMove={handleMouseMove}
-                  onMouseUp={handleMouseUp}
-                />
-                
-                {/* Render bounding boxes */}
-                {boundingBoxes.map(box => (
-                  <div
-                    key={box.id}
-                    className="absolute border-2 border-red-500 rounded pointer-events-none"
-                    style={{
-                      left: Math.min(box.x, box.x + box.width),
-                      top: Math.min(box.y, box.y + box.height),
-                      width: Math.abs(box.width),
-                      height: Math.abs(box.height),
-                      backgroundColor: 'transparent'
-                    }}
-                  >
-                    <div 
-                      className="absolute -top-8 left-0 bg-red-500 px-2 py-1 rounded text-xs font-medium text-white"
-                    >
-                      {issues.find(i => i.value === box.issue)?.label || 'Unknown'}
-                    </div>
-                  </div>
-                ))}
-                
-                {/* Render current drawing box */}
-                {currentBox && currentBox.width !== 0 && currentBox.height !== 0 && (
-                  <div
-                    className="absolute border-2 border-dashed border-red-500 rounded pointer-events-none"
-                    style={{
-                      left: Math.min(currentBox.x!, currentBox.x! + currentBox.width!),
-                      top: Math.min(currentBox.y!, currentBox.y! + currentBox.height!),
-                      width: Math.abs(currentBox.width!),
-                      height: Math.abs(currentBox.height!),
-                      backgroundColor: 'transparent'
-                    }}
-                  />
-                )}
-              </div>
-            </div>
-          </div>
+          <AnnotationCanvas
+            dummyImages={dummyImages}
+            currentImageIndex={currentImageIndex}
+            IMAGE_WIDTH={IMAGE_WIDTH}
+            IMAGE_HEIGHT={IMAGE_HEIGHT}
+            imageRef={imageRef}
+            canvasRef={canvasRef}
+            issues={issues}
+            boundingBoxes={boundingBoxes}
+            currentBox={currentBox}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onNextImage={nextImage}
+            onPreviousImage={previousImage}
+          />
         </div>
       </div>
 
