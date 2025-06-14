@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../store/store";
@@ -106,8 +105,26 @@ const Annotation: React.FC = () => {
     [dummyImages, currentImageIndex, dispatch]
   );
 
+  // Helper: Save pendingBox to Redux if it's set and issue is set
+  const flushPendingBox = useCallback(() => {
+    if (pendingBox && pendingBox.issue) {
+      // Save this pendingBox to current redux state before changing image
+      const imageId = dummyImages[currentImageIndex];
+      const updatedBoxes = [...boundingBoxes, pendingBox];
+      dispatch(
+        saveAnnotationForImage({
+          imageId,
+          boxes: updatedBoxes,
+        })
+      );
+      // Clear the pending box to prevent double-save
+      setPendingBox(null);
+    }
+  }, [pendingBox, boundingBoxes, currentImageIndex, dispatch]);
+
   // Save when going to next image
   const handleNextImage = () => {
+    flushPendingBox(); // Save any pending box first!
     saveBoxesForCurrentImage(boundingBoxes);
     if (currentImageIndex < dummyImages.length - 1) {
       setCurrentImageIndex(currentImageIndex + 1);
@@ -116,6 +133,7 @@ const Annotation: React.FC = () => {
 
   // Save when going to previous image
   const handlePreviousImage = () => {
+    flushPendingBox();
     saveBoxesForCurrentImage(boundingBoxes);
     if (currentImageIndex > 0) {
       setCurrentImageIndex(currentImageIndex - 1);
@@ -124,6 +142,7 @@ const Annotation: React.FC = () => {
 
   // Save when jumping directly to any image (if applicable)
   const handleGoToImage = (index: number) => {
+    flushPendingBox();
     saveBoxesForCurrentImage(boundingBoxes);
     setCurrentImageIndex(index);
   };
@@ -356,4 +375,3 @@ const Annotation: React.FC = () => {
 export default Annotation;
 
 // This file is getting too long! Consider refactoring into smaller components & hooks.
-
