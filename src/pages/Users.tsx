@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../store/store";
 import confetti from "canvas-confetti";
@@ -10,67 +10,60 @@ import QuizSidebar from "@/components/QuizSidebar";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { setCurrentImageIndex, nextImage, previousImage } from "../store/imageNavSlice";
 
-const dummyImages = ["https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=1200&h=800&fit=crop", "https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=1200&h=800&fit=crop", "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1200&h=800&fit=crop", "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1200&h=800&fit=crop"];
-const getAnnotationDimensions = () => {
-  const screenW = window.innerWidth;
-  const screenH = window.innerHeight;
-  // Use as MUCH space as possible, but maintain aspect ratio 4:3
-  const MAX_WIDTH = Math.min(screenW - 64, 1152);
-  const MAX_HEIGHT = Math.min(screenH - 112, 864);
-  const ASPECT_RATIO = 4 / 3;
-  let width = MAX_WIDTH,
-    height = MAX_HEIGHT;
-  if (width / height > ASPECT_RATIO) {
-    width = height * ASPECT_RATIO;
-  } else {
-    height = width / ASPECT_RATIO;
-  }
-  return {
-    width: Math.round(width),
-    height: Math.round(height)
-  };
-};
-const defaultIssues = [{
-  value: "pothole",
-  label: "Pothole",
-  color: "#ef4444"
-}, {
-  value: "crack",
-  label: "Road Crack",
-  color: "#f97316"
-}, {
-  value: "debris",
-  label: "Debris",
-  color: "#eab308"
-}, {
-  value: "marking",
-  label: "Missing Marking",
-  color: "#3b82f6"
-}, {
-  value: "sign",
-  label: "Damaged Sign",
-  color: "#8b5cf6"
-}, {
-  value: "other",
-  label: "Other Issue",
-  color: "#6b7280"
-}];
+// Dummy images and issues (keep consistent with annotation manager)
+const dummyImages = [
+  "https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=1200&h=800&fit=crop",
+  "https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=1200&h=800&fit=crop",
+  "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1200&h=800&fit=crop",
+  "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1200&h=800&fit=crop",
+];
+
+const defaultIssues = [
+  { value: "pothole", label: "Pothole", color: "#ef4444" },
+  { value: "crack", label: "Road Crack", color: "#f97316" },
+  { value: "debris", label: "Debris", color: "#eab308" },
+  { value: "marking", label: "Missing Marking", color: "#3b82f6" },
+  { value: "sign", label: "Damaged Sign", color: "#8b5cf6" },
+  { value: "other", label: "Other Issue", color: "#6b7280" },
+];
+
 function getRandomOptions(correct, allIssues) {
   let options = allIssues.filter(i => i.value !== correct.value);
   options = options.sort(() => Math.random() - 0.5).slice(0, 3);
   options.push(correct);
   return options.sort(() => Math.random() - 0.5);
 }
+
 const Users: React.FC = () => {
   const dispatch = useDispatch();
-  const [{ width: IMAGE_WIDTH, height: IMAGE_HEIGHT }, setDims] = React.useState(getAnnotationDimensions());
-
-  // Use currentImageIndex from Redux store
+  // Get the current image index from Redux
   const currentImageIndex = useSelector((state: RootState) => state.imageNav.currentImageIndex);
-  const screenW = React.useSelector(() => window.innerWidth); // You might want to keep this as useState with effect, but I'll leave as-is
 
-  // Reset state on new image
-  React.useEffect(() => {
+  // Get bounding boxes for the current image from Redux
+  const allAnnotations = useSelector((state: RootState) => state.annotation.annotations);
+  const imageUrl = dummyImages[currentImageIndex];
+  const boundingBoxes = allAnnotations[imageUrl] || [];
+
+  // State for quiz/game mechanics
+  const [revealedBoxes, setRevealedBoxes] = useState<{ [id: string]: boolean }>({});
+  const [answeredBoxes, setAnsweredBoxes] = useState<{ [id: string]: boolean }>({});
+  const [quizForBox, setQuizForBox] = useState<any>(null);
+  const [feedback, setFeedback] = useState<{ correct: boolean; label: string } | null>(null);
+  const [feedbackVisible, setFeedbackVisible] = useState(false);
+  const [lockedUI, setLockedUI] = useState(false);
+  const [allCorrectAnswered, setAllCorrectAnswered] = useState(false);
+  const [feedbackBoxes, setFeedbackBoxes] = useState<{ [id: string]: "green" | "red" | undefined }>({});
+
+  // Responsive: get window width to determine mobile status
+  const [screenW, setScreenW] = useState(window.innerWidth);
+  useEffect(() => {
+    const onResize = () => setScreenW(window.innerWidth);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+
+  // Reset all quiz/game state when image changes
+  useEffect(() => {
     setRevealedBoxes({});
     setAnsweredBoxes({});
     setQuizForBox(null);
@@ -78,26 +71,27 @@ const Users: React.FC = () => {
     setFeedbackVisible(false);
     setLockedUI(false);
     setAllCorrectAnswered(false);
-    setFeedbackBoxes({}); // Reset sidebar feedback
+    setFeedbackBoxes({});
   }, [currentImageIndex]);
 
-  const handleBoxReveal = hiddenBox => {
+  const handleBoxReveal = (hiddenBox) => {
     setRevealedBoxes(prev => ({
       ...prev,
       [hiddenBox.id]: true
     }));
-    const correctIssue = allIssues.find(i => i.value === hiddenBox.issue) || {
+    const correctIssue = defaultIssues.find(i => i.value === hiddenBox.issue) || {
       value: hiddenBox.issue,
       label: hiddenBox.issue.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase()),
       color: "#f59e0b"
     };
     setQuizForBox({
       box: hiddenBox,
-      options: getRandomOptions(correctIssue, allIssues),
+      options: getRandomOptions(correctIssue, defaultIssues),
       correct: correctIssue
     });
   };
-  const handleAnswer = sel => {
+
+  const handleAnswer = (sel) => {
     if (!quizForBox) return;
     const wasCorrect = sel.value === quizForBox.correct.value;
     setLockedUI(true);
@@ -110,20 +104,18 @@ const Users: React.FC = () => {
       ...prev,
       [quizForBox.box.id]: true
     }));
-    // Set sidebar feedback color
     setFeedbackBoxes(prev => ({
       ...prev,
       [quizForBox.box.id]: wasCorrect ? "green" : "red"
     }));
     setQuizForBox(null);
+
     if (wasCorrect) {
       setTimeout(() => {
         confetti({
           particleCount: 180,
           spread: 90,
-          origin: {
-            y: 0.5
-          }
+          origin: { y: 0.5 }
         });
       }, 200);
     }
@@ -132,6 +124,7 @@ const Users: React.FC = () => {
       setFeedbackVisible(false);
       setLockedUI(false);
     }, 1000);
+
     const handleClick = () => {
       clearTimeout(timeout);
       setFeedback(null);
@@ -141,6 +134,7 @@ const Users: React.FC = () => {
     };
     window.addEventListener("mousedown", handleClick, true);
   };
+
   const handleAllCorrect = (wasCorrect: boolean) => {
     setLockedUI(true);
     setFeedback({
@@ -151,7 +145,7 @@ const Users: React.FC = () => {
     setAllCorrectAnswered(true);
     setQuizForBox(null);
 
-    // If user is wrong, mark all boxes as red in sidebar
+    // If user is wrong, mark all boxes as red in sidebar and all as answered
     if (!wasCorrect && boundingBoxes.length > 0) {
       const newFeedback: any = {};
       for (const box of boundingBoxes) {
@@ -174,42 +168,44 @@ const Users: React.FC = () => {
     };
     window.addEventListener("mousedown", handleClick, true);
 
-    // If correct, optionally trigger confetti etc.
     if (wasCorrect) {
       setTimeout(() => {
         confetti({
           particleCount: 120,
           spread: 78,
-          origin: {
-            y: 0.5
-          }
+          origin: { y: 0.5 }
         });
       }, 200);
     }
   };
 
-  // True if all boxes answered for this image OR allCorrectAnswered
-  const canNext = boundingBoxes.length > 0 && Object.keys(answeredBoxes).length === boundingBoxes.length || boundingBoxes.length === 0 && allCorrectAnswered;
-  const nextImage = () => {
+  // Navigation computed variables
+  const canNext =
+    (boundingBoxes.length > 0 && Object.keys(answeredBoxes).length === boundingBoxes.length) ||
+    (boundingBoxes.length === 0 && allCorrectAnswered);
+  const lastImage = currentImageIndex === dummyImages.length - 1;
+  const firstImage = currentImageIndex === 0;
+  const isMobile = screenW < 1024;
+
+  // Page navigation actions
+  const nextImg = () => {
     if (currentImageIndex < dummyImages.length - 1) {
       dispatch(nextImage({ imagesLength: dummyImages.length }));
     }
   };
-  const previousImage = () => {
+  const prevImg = () => {
     if (currentImageIndex > 0) {
       dispatch(previousImage());
     }
   };
-  const lastImage = currentImageIndex === dummyImages.length - 1;
-  const firstImage = currentImageIndex === 0;
-  const isMobile = screenW < 1024;
-  return <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-4 lg:p-6">
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-4 lg:p-6">
       {/* Header (Title + Actions) */}
       <div className="mb-6">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div className="flex items-center space-x-3">
             <div className="w-8 h-8 bg-gradient-to-r from-emerald-400 to-pink-400 rounded-lg flex items-center justify-center">
-              {/* User icon */}
               <span className="text-white text-lg font-bold">👤</span>
             </div>
             <div>
@@ -226,7 +222,7 @@ const Users: React.FC = () => {
             <Button onClick={() => handleAllCorrect(boundingBoxes.length === 0)} disabled={lockedUI} className="flex items-center bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg text-base font-semibold transition-all w-full sm:w-auto" variant="default">
               Everything is correct in this image
             </Button>
-            <Button onClick={nextImage} disabled={!canNext || lastImage} className={`flex items-center px-6 py-2 rounded-lg text-base font-semibold transition-all w-full sm:w-auto ${canNext && !lastImage ? "bg-green-500 hover:bg-green-600 text-white" : ""}`} variant={canNext && !lastImage ? "default" : "secondary"}>
+            <Button onClick={nextImg} disabled={!canNext || lastImage} className={`flex items-center px-6 py-2 rounded-lg text-base font-semibold transition-all w-full sm:w-auto ${canNext && !lastImage ? "bg-green-500 hover:bg-green-600 text-white" : ""}`} variant={canNext && !lastImage ? "default" : "secondary"}>
               Next
               <ChevronRight className="w-4 h-4 ml-1" />
             </Button>
@@ -250,7 +246,7 @@ const Users: React.FC = () => {
                 Image {currentImageIndex + 1} of {dummyImages.length}
               </div>
               <div className="flex items-center space-x-2">
-                <Button onClick={previousImage} disabled={firstImage} className="flex items-center bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded-lg transition-all duration-200" variant="secondary">
+                <Button onClick={prevImg} disabled={firstImage} className="flex items-center bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded-lg transition-all duration-200" variant="secondary">
                   <ChevronLeft className="w-4 h-4 mr-1" />
                   Previous
                 </Button>
@@ -259,24 +255,25 @@ const Users: React.FC = () => {
             </div>
             <div className="flex justify-center">
               <div className="relative bg-gray-900 rounded-xl overflow-hidden border border-gray-600" style={{
-              width: 900,
-              height: 600
-            }}>
-                <QuizImage imageUrl={imageUrl} boundingBoxes={boundingBoxes} revealedBoxes={revealedBoxes} answeredBoxes={answeredBoxes} onBoxReveal={handleBoxReveal} imageDims={{
                 width: 900,
                 height: 600
-              }} lockedUI={lockedUI} quizForBox={quizForBox} feedbackVisible={feedbackVisible} />
+              }}>
+                <QuizImage imageUrl={imageUrl} boundingBoxes={boundingBoxes} revealedBoxes={revealedBoxes} answeredBoxes={answeredBoxes} onBoxReveal={handleBoxReveal} imageDims={{
+                  width: 900,
+                  height: 600
+                }} lockedUI={lockedUI} quizForBox={quizForBox} feedbackVisible={feedbackVisible} />
                 <QuizOptions quizForBox={quizForBox} onAnswer={handleAnswer} lockedUI={lockedUI} />
                 <QuizFeedback visible={feedbackVisible && feedback !== null} correct={!!feedback?.correct} onDismiss={() => {
-                setFeedback(null);
-                setFeedbackVisible(false);
-                setLockedUI(false);
-              }} />
+                  setFeedback(null);
+                  setFeedbackVisible(false);
+                  setLockedUI(false);
+                }} />
               </div>
             </div>
           </div>
         </div>
       </div>
-    </div>;
+    </div>
+  );
 };
 export default Users;
