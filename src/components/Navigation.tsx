@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Upload, Image, Trophy, Users as UsersIcon } from 'lucide-react';
+import { Home, Upload, Image, Trophy, BookOpen } from 'lucide-react';
 
 const Navigation = () => {
   const location = useLocation();
@@ -10,7 +10,7 @@ const Navigation = () => {
     { path: '/upload', icon: Upload, label: 'Upload' },
     { path: '/annotation', icon: Image, label: 'Annotation' },
     { path: '/leaderboard', icon: Trophy, label: 'Leaderboard' },
-    { path: '/users', icon: UsersIcon, label: 'Users Quiz' },
+    { path: '/users', icon: BookOpen, label: 'Users Quiz' }, // Changed to BookOpen (quiz)
   ];
 
   return (
