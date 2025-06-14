@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Home, Upload, Image, Trophy, BookOpen } from 'lucide-react';
@@ -29,9 +30,14 @@ const Navigation = () => {
             title={label}
           >
             <Icon size={20} />
-            
             {/* Hover tooltip */}
-            <div className="absolute left-full ml-2 px-2 py-1 bg-gray-800 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+            <div
+              className="absolute left-full ml-2 px-2 py-1 bg-gray-800 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-[1000] shadow-xl" // <-- z-[1000] (above all), shadow-xl for elevation
+              style={{
+                top: '50%',
+                transform: 'translateY(-50%)',
+              }}
+            >
               {label}
             </div>
           </Link>
@@ -42,3 +48,4 @@ const Navigation = () => {
 };
 
 export default Navigation;
+
