@@ -78,7 +78,6 @@ const Annotation: React.FC = () => {
   const [currentBox, setCurrentBox] = useState<CurrentBox | null>(null);
   const imageRef = useRef<HTMLImageElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [screenW, setScreenW] = React.useState(window.innerWidth);
 
   const dispatch = useDispatch();
 
@@ -128,16 +127,7 @@ const Annotation: React.FC = () => {
     };
   }, [saveBoxesForCurrentImage]);
 
-  useEffect(() => {
-    function handleResize() {
-      setScreenW(window.innerWidth);
-    }
-
-    window.addEventListener("resize", handleResize);
-
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
+  // useEffect to set dimensions on resize
   useEffect(() => {
     const handleResize = () => {
       setDims(getAnnotationDimensions());
@@ -222,7 +212,8 @@ const Annotation: React.FC = () => {
     dispatch(saveAnnotationForImage({ imageId, boxes: updatedBoxes }));
   };
 
-  const isMobile = screenW < 1024;
+  // Instead, infer isMobile from IMAGE_WIDTH:
+  const isMobile = IMAGE_WIDTH < 1024;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-4 lg:p-6">
