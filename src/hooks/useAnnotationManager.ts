@@ -1,34 +1,58 @@
 
-import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../store/store";
 import { saveAnnotationForImage } from "../store/annotationSlice";
 import { v4 as uuidv4 } from 'uuid';
-import { Issue, BoundingBox, CurrentBox } from "@/types/annotationTypes";
+import { ImageData, ViolationDetail, BoundingBox, CurrentBox } from "@/types/annotationTypes";
 import { setCurrentImageIndex, nextImage, previousImage } from "../store/imageNavSlice";
 
-export const defaultIssues: Issue[] = [
-  { value: "pothole", label: "Pothole", color: "#ef4444" },
-  { value: "crack", label: "Road Crack", color: "#f97316" },
-  { value: "debris", label: "Debris", color: "#eab308" },
-  { value: "marking", label: "Missing Marking", color: "#3b82f6" },
-  { value: "sign", label: "Damaged Sign", color: "#8b5cf6" },
-  { value: "other", label: "Other Issue", color: "#6b7280" },
-];
-
-// Dummy image URLs for annotation
-export const dummyImages = [
-  "https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=1200&h=800&fit=crop",
-  "https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=1200&h=800&fit=crop",
-  "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1200&h=800&fit=crop",
-  "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1200&h=800&fit=crop",
+// Mock data with the new structure
+export const mockImageData: ImageData[] = [
+  {
+    _id: "68690639d912ec5777b86bc6",
+    imagePath: "https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=1200&h=800&fit=crop",
+    imageName: "Construction Site Safety Issue.jpeg",
+    violationDetails: [
+      {
+        name: "Working at Height Without Fall Protection",
+        description: "An individual is standing on top of a truck without any visible fall protection equipment.",
+        severity: "high"
+      },
+      {
+        name: "Lack of Personal Protective Equipment (PPE)",
+        description: "Individuals are not wearing any visible personal protective equipment such as helmets or reflective clothing.",
+        severity: "high"
+      }
+    ],
+    createdAt: "2025-07-05T11:02:17.553Z",
+    updatedAt: "2025-07-05T11:03:53.498Z"
+  },
+  {
+    _id: "68690639d912ec5777b86bc7",
+    imagePath: "https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=1200&h=800&fit=crop",
+    imageName: "Road Safety Violations.jpeg",
+    violationDetails: [
+      {
+        name: "Improper Traffic Control",
+        description: "Work zone lacks proper traffic control signs and barriers.",
+        severity: "medium"
+      },
+      {
+        name: "Worker in Traffic Lane",
+        description: "Workers are present in active traffic lanes without proper protection.",
+        severity: "high"
+      }
+    ],
+    createdAt: "2025-07-05T11:02:17.553Z",
+    updatedAt: "2025-07-05T11:03:53.498Z"
+  }
 ];
 
 function getAnnotationDimensions() {
   const screenW = window.innerWidth;
   const screenH = window.innerHeight;
 
-  // Use as MUCH space as possible, but maintain aspect ratio 4:3
   const MAX_WIDTH = Math.min(screenW - 64, 1152);
   const MAX_HEIGHT = Math.min(screenH - 112, 864);
   const ASPECT_RATIO = 4 / 3;
@@ -52,45 +76,27 @@ export function useAnnotationManager() {
     useState(getAnnotationDimensions());
   const dispatch = useDispatch();
 
-  // Use currentImageIndex from Redux for global image navigation
   const currentImageIndex = useSelector(
     (state: RootState) => state.imageNav.currentImageIndex
   );
 
-  const [issues, setIssues] = useState<Issue[]>(defaultIssues);
   const [currentBox, setCurrentBox] = useState<CurrentBox | null>(null);
   const [pendingBox, setPendingBox] = useState<BoundingBox | null>(null);
-  const [issueDialogOpen, setIssueDialogOpen] = useState(false);
+  const [violationDialogOpen, setViolationDialogOpen] = useState(false);
 
   const imageRef = useRef<HTMLImageElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  // Use Redux selector for bounding boxes for current image
   const allAnnotations = useSelector(
     (state: RootState) => state.annotation.annotations
   );
 
-  // This is the canonical source for bounding boxes per-image, don't sync with local state
-  const imageId = dummyImages[currentImageIndex];
+  const currentImageData = mockImageData[currentImageIndex];
+  const imageId = currentImageData?._id || '';
   const boundingBoxes: BoundingBox[] = allAnnotations[imageId] || [];
 
-  // Save boxes for current image in redux store
-  const saveBoxesForCurrentImage = useCallback(
-    (boxes: BoundingBox[]) => {
-      dispatch(
-        saveAnnotationForImage({
-          imageId: dummyImages[currentImageIndex],
-          boxes,
-        })
-      );
-    },
-    [currentImageIndex, dispatch]
-  );
-
   const flushPendingBox = useCallback(() => {
-    if (pendingBox && pendingBox.issue) {
-      // Always get latest boundingBoxes from Redux state
-      const imageId = dummyImages[currentImageIndex];
+    if (pendingBox && pendingBox.violationName) {
       const currentBoxes = (allAnnotations && allAnnotations[imageId]) || [];
       const updatedBoxes = [...currentBoxes, pendingBox];
       dispatch(
@@ -101,14 +107,11 @@ export function useAnnotationManager() {
       );
       setPendingBox(null);
     }
-  }, [pendingBox, allAnnotations, currentImageIndex, dispatch]);
+  }, [pendingBox, allAnnotations, imageId, dispatch]);
 
-  // Flush pending box on unmount (FIXED: removed problematic dependencies)
   useEffect(() => {
     return () => {
-      // On unmount, flush any pendingBox
-      if (pendingBox && pendingBox.issue) {
-        const imageId = dummyImages[currentImageIndex];
+      if (pendingBox && pendingBox.violationName) {
         const currentBoxes = (allAnnotations && allAnnotations[imageId]) || [];
         const updatedBoxes = [...currentBoxes, pendingBox];
         dispatch(
@@ -122,7 +125,6 @@ export function useAnnotationManager() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // useEffect to set dimensions on resize
   useEffect(() => {
     const handleResize = () => {
       setDims(getAnnotationDimensions());
@@ -134,7 +136,6 @@ export function useAnnotationManager() {
     };
   }, []);
 
-  // Annotation logic
   const startDrawing = (x: number, y: number) => {
     setCurrentBox({
       id: uuidv4(),
@@ -176,15 +177,14 @@ export function useAnnotationManager() {
       y: currentBox.y,
       width: currentBox.width,
       height: currentBox.height,
-      issue: "",
+      violationName: "",
     };
 
     setPendingBox(newPendingBox);
     setCurrentBox(null);
-    setIssueDialogOpen(true);
+    setViolationDialogOpen(true);
   };
 
-  // Mouse event handlers
   const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (!canvasRef.current) return;
     const rect = canvasRef.current.getBoundingClientRect();
@@ -205,10 +205,9 @@ export function useAnnotationManager() {
     finishDrawing();
   };
 
-  // Save when going to next/prev image (flush pending first)
   const handleNextImage = () => {
     flushPendingBox();
-    dispatch(nextImage({ imagesLength: dummyImages.length }));
+    dispatch(nextImage({ imagesLength: mockImageData.length }));
   };
 
   const handlePreviousImage = () => {
@@ -216,82 +215,54 @@ export function useAnnotationManager() {
     dispatch(previousImage());
   };
 
-  const handleGoToImage = (index: number) => {
-    flushPendingBox();
-    dispatch(setCurrentImageIndex(index));
-  };
-
-  // Delete box
   const handleDeleteBoundingBox = (id: string) => {
-    const imageId = dummyImages[currentImageIndex];
     const currentBoxes = (allAnnotations && allAnnotations[imageId]) || [];
     const updatedBoxes = currentBoxes.filter((box) => box.id !== id);
     dispatch(saveAnnotationForImage({ imageId, boxes: updatedBoxes }));
   };
 
-  // ---- IssueDialog handlers ----
-  const handleSelectIssue = (selectedIssue: string) => {
+  const handleSelectViolation = (selectedViolation: string) => {
     if (!pendingBox) return;
-    const imageId = dummyImages[currentImageIndex];
-    // Always get latest boxes from redux, not from stale closure.
-    const baseBoxes = (allAnnotations && allAnnotations[imageId]) || [];
-    const boxWithIssue: BoundingBox = {
+    const currentBoxes = (allAnnotations && allAnnotations[imageId]) || [];
+    const boxWithViolation: BoundingBox = {
       ...pendingBox,
-      issue: selectedIssue,
+      violationName: selectedViolation,
     };
-    const updatedBoxes = [...baseBoxes, boxWithIssue];
+    const updatedBoxes = [...currentBoxes, boxWithViolation];
     dispatch(saveAnnotationForImage({ imageId, boxes: updatedBoxes }));
 
     setPendingBox(null);
-    setIssueDialogOpen(false);
+    setViolationDialogOpen(false);
   };
 
-  const handleAddIssue = (newIssue: Issue) => {
-    setIssues((prev) => [...prev, newIssue]);
+  const getSeverityColor = (severity: string) => {
+    switch (severity) {
+      case 'high': return '#ef4444';
+      case 'medium': return '#f97316';
+      case 'low': return '#eab308';
+      default: return '#6b7280';
+    }
   };
-
-  const handleRemoveIssue = (issueValue: string) => {
-    // Prevent removal of built-in issues
-    if (
-      [
-        "pothole", "crack", "debris", "marking", "sign", "other",
-      ].includes(issueValue)
-    )
-      return;
-    setIssues((prev) => prev.filter((i) => i.value !== issueValue));
-  };
-
-  const isMobile = IMAGE_WIDTH < 1024;
 
   return {
     IMAGE_WIDTH,
     IMAGE_HEIGHT,
     currentImageIndex,
-    setCurrentImageIndex: (idx: number) => dispatch(setCurrentImageIndex(idx)),
-    issues,
-    setIssues,
+    currentImageData,
     currentBox,
-    setCurrentBox,
     pendingBox,
-    setPendingBox,
-    issueDialogOpen,
-    setIssueDialogOpen,
+    violationDialogOpen,
+    setViolationDialogOpen,
     imageRef,
     canvasRef,
     boundingBoxes,
-    startDrawing,
-    updateDrawing,
-    finishDrawing,
     handleMouseDown,
     handleMouseMove,
     handleMouseUp,
     handleNextImage,
     handlePreviousImage,
-    handleGoToImage,
     handleDeleteBoundingBox,
-    handleSelectIssue,
-    handleAddIssue,
-    handleRemoveIssue,
-    isMobile,
+    handleSelectViolation,
+    getSeverityColor,
   };
 }

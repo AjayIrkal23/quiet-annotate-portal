@@ -1,55 +1,34 @@
+
 import React from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-
-interface Issue {
-  value: string;
-  label: string;
-  color: string;
-}
-
-interface BoundingBox {
-  id: string;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  issue: string;
-}
-
-interface PartialBoundingBox {
-  id?: string;
-  x?: number;
-  y?: number;
-  width?: number;
-  height?: number;
-  issue?: string;
-}
+import { ImageData, ViolationDetail, BoundingBox, CurrentBox } from "@/types/annotationTypes";
 
 interface AnnotationCanvasProps {
-  dummyImages: string[];
+  currentImageData: ImageData;
   currentImageIndex: number;
+  totalImages: number;
   IMAGE_WIDTH: number;
   IMAGE_HEIGHT: number;
   imageRef: React.RefObject<HTMLImageElement>;
   canvasRef: React.RefObject<HTMLCanvasElement>;
-  issues: Issue[];
   boundingBoxes: BoundingBox[];
-  currentBox: PartialBoundingBox | null;
+  currentBox: CurrentBox | null;
   onMouseDown: (e: React.MouseEvent<HTMLCanvasElement>) => void;
   onMouseMove: (e: React.MouseEvent<HTMLCanvasElement>) => void;
   onMouseUp: (e: React.MouseEvent<HTMLCanvasElement>) => void;
   onNextImage: () => void;
   onPreviousImage: () => void;
+  getSeverityColor: (severity: string) => string;
 }
 
 const AnnotationCanvas: React.FC<AnnotationCanvasProps> = ({
-  dummyImages,
+  currentImageData,
   currentImageIndex,
+  totalImages,
   IMAGE_WIDTH,
   IMAGE_HEIGHT,
   imageRef,
   canvasRef,
-  issues,
   boundingBoxes,
   currentBox,
   onMouseDown,
@@ -57,17 +36,15 @@ const AnnotationCanvas: React.FC<AnnotationCanvasProps> = ({
   onMouseUp,
   onNextImage,
   onPreviousImage,
+  getSeverityColor,
 }) => {
-  // Add debugging logs to investigate the box values
-  console.log("Rendering boundingBoxes for image", currentImageIndex, boundingBoxes);
-
   return (
     <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl border border-gray-700/50 shadow-2xl p-4 lg:p-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-4">
         <div className="flex items-center space-x-4">
-          <h2 className="text-lg font-bold text-white">Image Canvas</h2>
+          <h2 className="text-lg font-bold text-white">Annotation Canvas</h2>
           <div className="text-sm text-gray-400">
-            Image {currentImageIndex + 1} of {dummyImages.length}
+            Image {currentImageIndex + 1} of {totalImages}
           </div>
         </div>
 
@@ -89,6 +66,11 @@ const AnnotationCanvas: React.FC<AnnotationCanvasProps> = ({
         </div>
       </div>
 
+      <div className="mb-4">
+        <h3 className="text-white font-medium mb-2">{currentImageData.imageName}</h3>
+        <p className="text-gray-400 text-sm">Draw bounding boxes around the violations listed in the sidebar</p>
+      </div>
+
       <div className="flex justify-center">
         <div
           className="relative bg-gray-900 rounded-xl overflow-hidden border border-gray-600"
@@ -96,8 +78,8 @@ const AnnotationCanvas: React.FC<AnnotationCanvasProps> = ({
         >
           <img
             ref={imageRef}
-            src={dummyImages[currentImageIndex]}
-            alt="Annotation target"
+            src={currentImageData.imagePath}
+            alt={currentImageData.imageName}
             className="absolute inset-0 w-full h-full object-cover"
             style={{ width: IMAGE_WIDTH, height: IMAGE_HEIGHT }}
           />
@@ -114,21 +96,27 @@ const AnnotationCanvas: React.FC<AnnotationCanvasProps> = ({
 
           {/* Render bounding boxes */}
           {boundingBoxes.map((box) => {
-            console.log("Box:", box);
+            const violation = currentImageData.violationDetails.find(v => v.name === box.violationName);
+            const color = violation ? getSeverityColor(violation.severity) : '#ef4444';
+            
             return (
               <div
                 key={box.id}
-                className="absolute border-2 border-red-500 rounded pointer-events-none"
+                className="absolute border-2 rounded pointer-events-none"
                 style={{
                   left: Math.min(box.x, box.x + box.width),
                   top: Math.min(box.y, box.y + box.height),
                   width: Math.abs(box.width),
                   height: Math.abs(box.height),
+                  borderColor: color,
                   backgroundColor: "transparent",
                 }}
               >
-                <div className="absolute -top-8 left-0 bg-red-500 px-2 py-1 rounded text-xs font-medium text-white">
-                  {issues.find((i) => i.value === box.issue)?.label || "Unknown"}
+                <div 
+                  className="absolute -top-8 left-0 px-2 py-1 rounded text-xs font-medium text-white"
+                  style={{ backgroundColor: color }}
+                >
+                  {box.violationName}
                 </div>
               </div>
             );

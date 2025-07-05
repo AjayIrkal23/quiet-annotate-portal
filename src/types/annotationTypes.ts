@@ -1,8 +1,17 @@
 
-export interface Issue {
-  value: string;
-  label: string;
-  color: string;
+export interface ViolationDetail {
+  name: string;
+  description: string;
+  severity: 'high' | 'medium' | 'low';
+}
+
+export interface ImageData {
+  _id: string;
+  imagePath: string;
+  imageName: string;
+  violationDetails: ViolationDetail[];
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface BoundingBox {
@@ -11,7 +20,7 @@ export interface BoundingBox {
   y: number;
   width: number;
   height: number;
-  issue: string;
+  violationName: string;
 }
 
 export interface CurrentBox {
@@ -20,5 +29,5 @@ export interface CurrentBox {
   y?: number;
   width?: number;
   height?: number;
-  issue?: string;
+  violationName?: string;
 }
