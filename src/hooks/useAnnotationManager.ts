@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../store/store";
@@ -168,8 +167,40 @@ export function useAnnotationManager() {
 
   const handleSubmitAnnotations = () => {
     const annotations = allAnnotations[imageId] || [];
+    
+    // Create the data structure you specified
+    const submissionData = {
+      imageName: currentImageData.imageName,
+      imageSize: {
+        width: IMAGE_WIDTH,
+        height: IMAGE_HEIGHT
+      },
+      details: annotations.map(box => {
+        const violation = currentImageData.violationDetails.find(v => v.name === box.violationName);
+        return {
+          violationName: box.violationName,
+          description: violation?.description || '',
+          boundingBox: {
+            x: box.x,
+            y: box.y,
+            width: box.width,
+            height: box.height
+          }
+        };
+      })
+    };
+
+    // Dummy function to simulate backend submission
+    console.log('Submitting annotation data:', submissionData);
+    
+    // Simulate API call
+    setTimeout(() => {
+      console.log('Annotation submitted successfully!');
+      // You can add a toast notification here if needed
+    }, 1000);
+
+    // Still dispatch to Redux for state management
     dispatch(submitAnnotations({ imageId, annotations }));
-    console.log('Annotations submitted for image:', imageId, annotations);
   };
 
   const getSeverityColor = (severity: string) => {
