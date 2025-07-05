@@ -2,52 +2,10 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../store/store";
-import { saveAnnotationForImage } from "../store/annotationSlice";
+import { saveAnnotationForImage, submitAnnotations } from "../store/annotationSlice";
+import { nextImage, previousImage } from "../store/imageSlice";
 import { v4 as uuidv4 } from 'uuid';
-import { ImageData, ViolationDetail, BoundingBox, CurrentBox } from "@/types/annotationTypes";
-import { setCurrentImageIndex, nextImage, previousImage } from "../store/imageNavSlice";
-
-// Mock data with the new structure
-export const mockImageData: ImageData[] = [
-  {
-    _id: "68690639d912ec5777b86bc6",
-    imagePath: "https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=1200&h=800&fit=crop",
-    imageName: "Construction Site Safety Issue.jpeg",
-    violationDetails: [
-      {
-        name: "Working at Height Without Fall Protection",
-        description: "An individual is standing on top of a truck without any visible fall protection equipment.",
-        severity: "high"
-      },
-      {
-        name: "Lack of Personal Protective Equipment (PPE)",
-        description: "Individuals are not wearing any visible personal protective equipment such as helmets or reflective clothing.",
-        severity: "high"
-      }
-    ],
-    createdAt: "2025-07-05T11:02:17.553Z",
-    updatedAt: "2025-07-05T11:03:53.498Z"
-  },
-  {
-    _id: "68690639d912ec5777b86bc7",
-    imagePath: "https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=1200&h=800&fit=crop",
-    imageName: "Road Safety Violations.jpeg",
-    violationDetails: [
-      {
-        name: "Improper Traffic Control",
-        description: "Work zone lacks proper traffic control signs and barriers.",
-        severity: "medium"
-      },
-      {
-        name: "Worker in Traffic Lane",
-        description: "Workers are present in active traffic lanes without proper protection.",
-        severity: "high"
-      }
-    ],
-    createdAt: "2025-07-05T11:02:17.553Z",
-    updatedAt: "2025-07-05T11:03:53.498Z"
-  }
-];
+import { BoundingBox, CurrentBox } from "@/types/annotationTypes";
 
 function getAnnotationDimensions() {
   const screenW = window.innerWidth;
@@ -72,13 +30,11 @@ function getAnnotationDimensions() {
 }
 
 export function useAnnotationManager() {
-  const [{ width: IMAGE_WIDTH, height: IMAGE_HEIGHT }, setDims] =
-    useState(getAnnotationDimensions());
+  const [{ width: IMAGE_WIDTH, height: IMAGE_HEIGHT }, setDims] = useState(getAnnotationDimensions());
   const dispatch = useDispatch();
 
-  const currentImageIndex = useSelector(
-    (state: RootState) => state.imageNav.currentImageIndex
-  );
+  const { images, currentImageIndex } = useSelector((state: RootState) => state.image);
+  const allAnnotations = useSelector((state: RootState) => state.annotation.annotations);
 
   const [currentBox, setCurrentBox] = useState<CurrentBox | null>(null);
   const [pendingBox, setPendingBox] = useState<BoundingBox | null>(null);
@@ -87,43 +43,18 @@ export function useAnnotationManager() {
   const imageRef = useRef<HTMLImageElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  const allAnnotations = useSelector(
-    (state: RootState) => state.annotation.annotations
-  );
-
-  const currentImageData = mockImageData[currentImageIndex];
-  const imageId = currentImageData?._id || '';
+  const currentImageData = images[currentImageIndex];
+  const imageId = currentImageData?._id.$oid || '';
   const boundingBoxes: BoundingBox[] = allAnnotations[imageId] || [];
 
   const flushPendingBox = useCallback(() => {
     if (pendingBox && pendingBox.violationName) {
-      const currentBoxes = (allAnnotations && allAnnotations[imageId]) || [];
+      const currentBoxes = allAnnotations[imageId] || [];
       const updatedBoxes = [...currentBoxes, pendingBox];
-      dispatch(
-        saveAnnotationForImage({
-          imageId,
-          boxes: updatedBoxes,
-        })
-      );
+      dispatch(saveAnnotationForImage({ imageId, boxes: updatedBoxes }));
       setPendingBox(null);
     }
   }, [pendingBox, allAnnotations, imageId, dispatch]);
-
-  useEffect(() => {
-    return () => {
-      if (pendingBox && pendingBox.violationName) {
-        const currentBoxes = (allAnnotations && allAnnotations[imageId]) || [];
-        const updatedBoxes = [...currentBoxes, pendingBox];
-        dispatch(
-          saveAnnotationForImage({
-            imageId,
-            boxes: updatedBoxes,
-          })
-        );
-      }
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   useEffect(() => {
     const handleResize = () => {
@@ -207,7 +138,7 @@ export function useAnnotationManager() {
 
   const handleNextImage = () => {
     flushPendingBox();
-    dispatch(nextImage({ imagesLength: mockImageData.length }));
+    dispatch(nextImage());
   };
 
   const handlePreviousImage = () => {
@@ -216,14 +147,14 @@ export function useAnnotationManager() {
   };
 
   const handleDeleteBoundingBox = (id: string) => {
-    const currentBoxes = (allAnnotations && allAnnotations[imageId]) || [];
+    const currentBoxes = allAnnotations[imageId] || [];
     const updatedBoxes = currentBoxes.filter((box) => box.id !== id);
     dispatch(saveAnnotationForImage({ imageId, boxes: updatedBoxes }));
   };
 
   const handleSelectViolation = (selectedViolation: string) => {
     if (!pendingBox) return;
-    const currentBoxes = (allAnnotations && allAnnotations[imageId]) || [];
+    const currentBoxes = allAnnotations[imageId] || [];
     const boxWithViolation: BoundingBox = {
       ...pendingBox,
       violationName: selectedViolation,
@@ -233,6 +164,12 @@ export function useAnnotationManager() {
 
     setPendingBox(null);
     setViolationDialogOpen(false);
+  };
+
+  const handleSubmitAnnotations = () => {
+    const annotations = allAnnotations[imageId] || [];
+    dispatch(submitAnnotations({ imageId, annotations }));
+    console.log('Annotations submitted for image:', imageId, annotations);
   };
 
   const getSeverityColor = (severity: string) => {
@@ -256,6 +193,7 @@ export function useAnnotationManager() {
     imageRef,
     canvasRef,
     boundingBoxes,
+    totalImages: images.length,
     handleMouseDown,
     handleMouseMove,
     handleMouseUp,
@@ -263,6 +201,7 @@ export function useAnnotationManager() {
     handlePreviousImage,
     handleDeleteBoundingBox,
     handleSelectViolation,
+    handleSubmitAnnotations,
     getSeverityColor,
   };
 }

@@ -6,12 +6,19 @@ export interface ViolationDetail {
 }
 
 export interface ImageData {
-  _id: string;
+  _id: {
+    $oid: string;
+  };
   imagePath: string;
   imageName: string;
   violationDetails: ViolationDetail[];
-  createdAt: string;
-  updatedAt: string;
+  createdAt: {
+    $date: string;
+  };
+  updatedAt: {
+    $date: string;
+  };
+  __v: number;
 }
 
 export interface BoundingBox {
@@ -30,4 +37,9 @@ export interface CurrentBox {
   width?: number;
   height?: number;
   violationName?: string;
+}
+
+export interface AnnotationSubmission {
+  imageId: string;
+  annotations: BoundingBox[];
 }

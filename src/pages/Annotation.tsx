@@ -1,6 +1,6 @@
 
 import React from "react";
-import { useAnnotationManager, mockImageData } from "@/hooks/useAnnotationManager";
+import { useAnnotationManager } from "@/hooks/useAnnotationManager";
 import AnnotationCanvas from "@/components/AnnotationCanvas";
 import AnnotationSidebar from "@/components/AnnotationSidebar";
 import ViolationDialog from "@/components/ViolationDialog";
@@ -18,6 +18,7 @@ const Annotation: React.FC = () => {
     imageRef,
     canvasRef,
     boundingBoxes,
+    totalImages,
     handleMouseDown,
     handleMouseMove,
     handleMouseUp,
@@ -25,6 +26,7 @@ const Annotation: React.FC = () => {
     handlePreviousImage,
     handleDeleteBoundingBox,
     handleSelectViolation,
+    handleSubmitAnnotations,
     getSeverityColor,
   } = useAnnotationManager();
 
@@ -76,7 +78,7 @@ const Annotation: React.FC = () => {
           <AnnotationCanvas
             currentImageData={currentImageData}
             currentImageIndex={currentImageIndex}
-            totalImages={mockImageData.length}
+            totalImages={totalImages}
             IMAGE_WIDTH={IMAGE_WIDTH}
             IMAGE_HEIGHT={IMAGE_HEIGHT}
             imageRef={imageRef}
@@ -88,6 +90,7 @@ const Annotation: React.FC = () => {
             onMouseUp={handleMouseUp}
             onNextImage={handleNextImage}
             onPreviousImage={handlePreviousImage}
+            onSubmitAnnotations={handleSubmitAnnotations}
             getSeverityColor={getSeverityColor}
           />
         </div>

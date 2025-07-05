@@ -1,7 +1,7 @@
 
 import React from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import { ImageData, ViolationDetail, BoundingBox, CurrentBox } from "@/types/annotationTypes";
+import { ChevronLeft, ChevronRight, Send } from "lucide-react";
+import { ImageData, BoundingBox, CurrentBox } from "@/types/annotationTypes";
 
 interface AnnotationCanvasProps {
   currentImageData: ImageData;
@@ -18,6 +18,7 @@ interface AnnotationCanvasProps {
   onMouseUp: (e: React.MouseEvent<HTMLCanvasElement>) => void;
   onNextImage: () => void;
   onPreviousImage: () => void;
+  onSubmitAnnotations: () => void;
   getSeverityColor: (severity: string) => string;
 }
 
@@ -36,6 +37,7 @@ const AnnotationCanvas: React.FC<AnnotationCanvasProps> = ({
   onMouseUp,
   onNextImage,
   onPreviousImage,
+  onSubmitAnnotations,
   getSeverityColor,
 }) => {
   return (
@@ -51,14 +53,26 @@ const AnnotationCanvas: React.FC<AnnotationCanvasProps> = ({
         <div className="flex items-center space-x-2">
           <button
             onClick={onPreviousImage}
-            className="flex items-center space-x-2 bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded-lg transition-all duration-200"
+            disabled={currentImageIndex === 0}
+            className="flex items-center space-x-2 bg-gray-700 hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed text-white px-3 py-2 rounded-lg transition-all duration-200"
           >
             <ChevronLeft className="w-4 h-4" />
             <span>Previous</span>
           </button>
+          
+          <button
+            onClick={onSubmitAnnotations}
+            disabled={boundingBoxes.length === 0}
+            className="flex items-center space-x-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-3 py-2 rounded-lg transition-all duration-200"
+          >
+            <Send className="w-4 h-4" />
+            <span>Submit</span>
+          </button>
+          
           <button
             onClick={onNextImage}
-            className="flex items-center space-x-2 bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded-lg transition-all duration-200"
+            disabled={currentImageIndex === totalImages - 1}
+            className="flex items-center space-x-2 bg-gray-700 hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed text-white px-3 py-2 rounded-lg transition-all duration-200"
           >
             <span>Next</span>
             <ChevronRight className="w-4 h-4" />
