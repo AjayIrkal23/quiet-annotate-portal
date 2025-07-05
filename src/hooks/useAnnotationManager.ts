@@ -1,21 +1,26 @@
-
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../store/store";
-import { saveAnnotationForImage, submitAnnotations } from "../store/annotationSlice";
+import {
+  saveAnnotationForImage,
+  submitAnnotations,
+} from "../store/annotationSlice";
 import { nextImage, previousImage } from "../store/imageSlice";
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4 } from "uuid";
 import { BoundingBox, CurrentBox } from "@/types/annotationTypes";
-
-// Fixed dimensions for consistent bounding boxes across all screens
-const FIXED_IMAGE_WIDTH = 800;
-const FIXED_IMAGE_HEIGHT = 600;
 
 export function useAnnotationManager() {
   const dispatch = useDispatch();
 
-  const { images, currentImageIndex } = useSelector((state: RootState) => state.image);
-  const allAnnotations = useSelector((state: RootState) => state.annotation.annotations);
+  const { images, currentImageIndex } = useSelector(
+    (state: RootState) => state.image
+  );
+  const allAnnotations = useSelector(
+    (state: RootState) => state.annotation.annotations
+  );
+
+  const [imageWidth, setImageWidth] = useState(800);
+  const [imageHeight, setImageHeight] = useState(600);
 
   const [currentBox, setCurrentBox] = useState<CurrentBox | null>(null);
   const [pendingBox, setPendingBox] = useState<BoundingBox | null>(null);
@@ -25,8 +30,30 @@ export function useAnnotationManager() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const currentImageData = images[currentImageIndex];
-  const imageId = currentImageData?._id.$oid || '';
+  const imageId = currentImageData?._id.$oid || "";
   const boundingBoxes: BoundingBox[] = allAnnotations[imageId] || [];
+
+  // Responsive logic
+  useEffect(() => {
+    const updateDimensions = () => {
+      const screenWidth = window.innerWidth;
+
+      if (screenWidth > 1440) {
+        setImageWidth(1000);
+        setImageHeight(750);
+      } else if (screenWidth > 1024) {
+        setImageWidth(900);
+        setImageHeight(675);
+      } else {
+        setImageWidth(750);
+        setImageHeight(550);
+      }
+    };
+
+    updateDimensions();
+    window.addEventListener("resize", updateDimensions);
+    return () => window.removeEventListener("resize", updateDimensions);
+  }, []);
 
   const flushPendingBox = useCallback(() => {
     if (pendingBox && pendingBox.violationName) {
@@ -138,54 +165,55 @@ export function useAnnotationManager() {
 
   const handleSubmitAnnotations = () => {
     const annotations = allAnnotations[imageId] || [];
-    
-    // Create the data structure you specified
+
     const submissionData = {
       imageName: currentImageData.imageName,
       imageSize: {
-        width: FIXED_IMAGE_WIDTH,
-        height: FIXED_IMAGE_HEIGHT
+        width: imageWidth,
+        height: imageHeight,
       },
-      details: annotations.map(box => {
-        const violation = currentImageData.violationDetails.find(v => v.name === box.violationName);
+      details: annotations.map((box) => {
+        const violation = currentImageData.violationDetails.find(
+          (v) => v.name === box.violationName
+        );
         return {
           violationName: box.violationName,
-          description: violation?.description || '',
+          description: violation?.description || "",
           boundingBox: {
             x: box.x,
             y: box.y,
             width: box.width,
-            height: box.height
-          }
+            height: box.height,
+          },
         };
-      })
+      }),
     };
 
-    // Dummy function to simulate backend submission
-    console.log('Submitting annotation data:', submissionData);
-    
-    // Simulate API call
+    console.log("Submitting annotation data:", submissionData);
+
     setTimeout(() => {
-      console.log('Annotation submitted successfully!');
-      // You can add a toast notification here if needed
+      console.log("Annotation submitted successfully!");
     }, 1000);
 
-    // Still dispatch to Redux for state management
     dispatch(submitAnnotations({ imageId, annotations }));
   };
 
   const getSeverityColor = (severity: string) => {
     switch (severity) {
-      case 'high': return '#ef4444';
-      case 'medium': return '#f97316';
-      case 'low': return '#eab308';
-      default: return '#6b7280';
+      case "high":
+        return "#ef4444";
+      case "medium":
+        return "#f97316";
+      case "low":
+        return "#eab308";
+      default:
+        return "#6b7280";
     }
   };
 
   return {
-    IMAGE_WIDTH: FIXED_IMAGE_WIDTH,
-    IMAGE_HEIGHT: FIXED_IMAGE_HEIGHT,
+    IMAGE_WIDTH: imageWidth,
+    IMAGE_HEIGHT: imageHeight,
     currentImageIndex,
     currentImageData,
     currentBox,
