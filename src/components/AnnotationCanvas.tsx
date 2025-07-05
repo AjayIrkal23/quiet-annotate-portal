@@ -1,4 +1,3 @@
-
 import React from "react";
 import { ChevronLeft, ChevronRight, Send } from "lucide-react";
 import { ImageData, BoundingBox, CurrentBox } from "@/types/annotationTypes";
@@ -20,6 +19,7 @@ interface AnnotationCanvasProps {
   onPreviousImage: () => void;
   onSubmitAnnotations: () => void;
   getSeverityColor: (severity: string) => string;
+  totalAnnotatedImages: number;
 }
 
 const AnnotationCanvas: React.FC<AnnotationCanvasProps> = ({
@@ -39,7 +39,10 @@ const AnnotationCanvas: React.FC<AnnotationCanvasProps> = ({
   onPreviousImage,
   onSubmitAnnotations,
   getSeverityColor,
+  totalAnnotatedImages,
 }) => {
+  const isLastImage = currentImageIndex === totalImages - 1;
+
   return (
     <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl border border-gray-700/50 shadow-2xl p-4 lg:p-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-4">
@@ -60,14 +63,16 @@ const AnnotationCanvas: React.FC<AnnotationCanvasProps> = ({
             <span>Previous</span>
           </button>
           
-          <button
-            onClick={onSubmitAnnotations}
-            disabled={boundingBoxes.length === 0}
-            className="flex items-center space-x-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-3 py-2 rounded-lg transition-all duration-200"
-          >
-            <Send className="w-4 h-4" />
-            <span>Submit</span>
-          </button>
+          {isLastImage && (
+            <button
+              onClick={onSubmitAnnotations}
+              disabled={totalAnnotatedImages === 0}
+              className="flex items-center space-x-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg transition-all duration-200 font-medium"
+            >
+              <Send className="w-4 h-4" />
+              <span>Submit All ({totalAnnotatedImages})</span>
+            </button>
+          )}
           
           <button
             onClick={onNextImage}
@@ -82,7 +87,12 @@ const AnnotationCanvas: React.FC<AnnotationCanvasProps> = ({
 
       <div className="mb-4">
         <h3 className="text-white font-medium mb-2">{currentImageData.imageName}</h3>
-        <p className="text-gray-400 text-sm">Draw bounding boxes around the violations listed in the sidebar</p>
+        <p className="text-gray-400 text-sm">
+          {isLastImage 
+            ? "This is the last image. Click 'Submit All' to send all annotations." 
+            : "Draw bounding boxes around the violations listed in the sidebar"
+          }
+        </p>
       </div>
 
       <div className="flex justify-center">

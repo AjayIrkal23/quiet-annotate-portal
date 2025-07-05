@@ -19,8 +19,8 @@ export function useAnnotationManager() {
     (state: RootState) => state.annotation.annotations
   );
 
-  const [imageWidth, setImageWidth] = useState(800);
-  const [imageHeight, setImageHeight] = useState(600);
+  const [imageWidth] = useState(800);
+  const [imageHeight] = useState(600);
 
   const [currentBox, setCurrentBox] = useState<CurrentBox | null>(null);
   const [pendingBox, setPendingBox] = useState<BoundingBox | null>(null);
@@ -33,27 +33,10 @@ export function useAnnotationManager() {
   const imageId = currentImageData?._id.$oid || "";
   const boundingBoxes: BoundingBox[] = allAnnotations[imageId] || [];
 
-  // Responsive logic
-  useEffect(() => {
-    const updateDimensions = () => {
-      const screenWidth = window.innerWidth;
-
-      if (screenWidth > 1440) {
-        setImageWidth(1000);
-        setImageHeight(750);
-      } else if (screenWidth > 1024) {
-        setImageWidth(900);
-        setImageHeight(675);
-      } else {
-        setImageWidth(750);
-        setImageHeight(550);
-      }
-    };
-
-    updateDimensions();
-    window.addEventListener("resize", updateDimensions);
-    return () => window.removeEventListener("resize", updateDimensions);
-  }, []);
+  // Calculate total annotated images
+  const totalAnnotatedImages = Object.keys(allAnnotations).filter(
+    imageId => allAnnotations[imageId] && allAnnotations[imageId].length > 0
+  ).length;
 
   const flushPendingBox = useCallback(() => {
     if (pendingBox && pendingBox.violationName) {
@@ -164,38 +147,51 @@ export function useAnnotationManager() {
   };
 
   const handleSubmitAnnotations = () => {
-    const annotations = allAnnotations[imageId] || [];
+    // Collect data from all images that have annotations
+    const allImageData = images.map((image) => {
+      const imageId = image._id.$oid;
+      const annotations = allAnnotations[imageId] || [];
+      
+      if (annotations.length === 0) return null;
 
-    const submissionData = {
-      imageName: currentImageData.imageName,
-      imageSize: {
-        width: imageWidth,
-        height: imageHeight,
-      },
-      details: annotations.map((box) => {
-        const violation = currentImageData.violationDetails.find(
-          (v) => v.name === box.violationName
-        );
-        return {
-          violationName: box.violationName,
-          description: violation?.description || "",
-          boundingBox: {
-            x: box.x,
-            y: box.y,
-            width: box.width,
-            height: box.height,
-          },
-        };
-      }),
-    };
+      return {
+        imageName: image.imageName,
+        imageSize: {
+          width: imageWidth,
+          height: imageHeight,
+        },
+        details: annotations.map((box) => {
+          const violation = image.violationDetails.find(
+            (v) => v.name === box.violationName
+          );
+          return {
+            violationName: box.violationName,
+            description: violation?.description || "",
+            boundingBox: {
+              x: box.x,
+              y: box.y,
+              width: box.width,
+              height: box.height,
+            },
+          };
+        }),
+      };
+    }).filter(Boolean); // Remove null entries
 
-    console.log("Submitting annotation data:", submissionData);
+    console.log("Submitting all annotated images data:", allImageData);
 
+    // Simulate API call
     setTimeout(() => {
-      console.log("Annotation submitted successfully!");
+      console.log(`Successfully submitted ${allImageData.length} annotated images!`);
+      alert(`Successfully submitted ${allImageData.length} annotated images!`);
     }, 1000);
 
-    dispatch(submitAnnotations({ imageId, annotations }));
+    // Clear all annotations after submission
+    Object.keys(allAnnotations).forEach(imageId => {
+      if (allAnnotations[imageId] && allAnnotations[imageId].length > 0) {
+        dispatch(submitAnnotations({ imageId, annotations: allAnnotations[imageId] }));
+      }
+    });
   };
 
   const getSeverityColor = (severity: string) => {
@@ -224,6 +220,7 @@ export function useAnnotationManager() {
     canvasRef,
     boundingBoxes,
     totalImages: images.length,
+    totalAnnotatedImages,
     handleMouseDown,
     handleMouseMove,
     handleMouseUp,

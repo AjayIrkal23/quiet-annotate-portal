@@ -19,6 +19,7 @@ const Annotation: React.FC = () => {
     canvasRef,
     boundingBoxes,
     totalImages,
+    totalAnnotatedImages,
     handleMouseDown,
     handleMouseMove,
     handleMouseUp,
@@ -55,7 +56,7 @@ const Annotation: React.FC = () => {
                 Safety Violation Annotation
               </h1>
               <p className="text-gray-400 text-sm">
-                Annotate the safety violations identified in the image
+                Annotate the safety violations identified in the image ({totalAnnotatedImages} images annotated)
               </p>
             </div>
           </div>
@@ -92,6 +93,7 @@ const Annotation: React.FC = () => {
             onPreviousImage={handlePreviousImage}
             onSubmitAnnotations={handleSubmitAnnotations}
             getSeverityColor={getSeverityColor}
+            totalAnnotatedImages={totalAnnotatedImages}
           />
         </div>
       </div>
