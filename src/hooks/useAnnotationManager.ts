@@ -1,3 +1,4 @@
+
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../store/store";
@@ -6,30 +7,11 @@ import { nextImage, previousImage } from "../store/imageSlice";
 import { v4 as uuidv4 } from 'uuid';
 import { BoundingBox, CurrentBox } from "@/types/annotationTypes";
 
-function getAnnotationDimensions() {
-  const screenW = window.innerWidth;
-  const screenH = window.innerHeight;
-
-  const MAX_WIDTH = Math.min(screenW - 64, 1152);
-  const MAX_HEIGHT = Math.min(screenH - 112, 864);
-  const ASPECT_RATIO = 4 / 3;
-
-  let width = MAX_WIDTH, height = MAX_HEIGHT;
-
-  if (width / height > ASPECT_RATIO) {
-    width = height * ASPECT_RATIO;
-  } else {
-    height = width / ASPECT_RATIO;
-  }
-
-  return {
-    width: Math.round(width),
-    height: Math.round(height),
-  };
-}
+// Fixed dimensions for consistent bounding boxes across all screens
+const FIXED_IMAGE_WIDTH = 800;
+const FIXED_IMAGE_HEIGHT = 600;
 
 export function useAnnotationManager() {
-  const [{ width: IMAGE_WIDTH, height: IMAGE_HEIGHT }, setDims] = useState(getAnnotationDimensions());
   const dispatch = useDispatch();
 
   const { images, currentImageIndex } = useSelector((state: RootState) => state.image);
@@ -54,17 +36,6 @@ export function useAnnotationManager() {
       setPendingBox(null);
     }
   }, [pendingBox, allAnnotations, imageId, dispatch]);
-
-  useEffect(() => {
-    const handleResize = () => {
-      setDims(getAnnotationDimensions());
-    };
-    window.addEventListener("resize", handleResize);
-    handleResize();
-    return () => {
-      window.removeEventListener("resize", handleResize);
-    };
-  }, []);
 
   const startDrawing = (x: number, y: number) => {
     setCurrentBox({
@@ -172,8 +143,8 @@ export function useAnnotationManager() {
     const submissionData = {
       imageName: currentImageData.imageName,
       imageSize: {
-        width: IMAGE_WIDTH,
-        height: IMAGE_HEIGHT
+        width: FIXED_IMAGE_WIDTH,
+        height: FIXED_IMAGE_HEIGHT
       },
       details: annotations.map(box => {
         const violation = currentImageData.violationDetails.find(v => v.name === box.violationName);
@@ -213,8 +184,8 @@ export function useAnnotationManager() {
   };
 
   return {
-    IMAGE_WIDTH,
-    IMAGE_HEIGHT,
+    IMAGE_WIDTH: FIXED_IMAGE_WIDTH,
+    IMAGE_HEIGHT: FIXED_IMAGE_HEIGHT,
     currentImageIndex,
     currentImageData,
     currentBox,
