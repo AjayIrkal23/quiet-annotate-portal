@@ -1,3 +1,4 @@
+
 import React, { useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Home, Upload, Image, Trophy, User, LogOut } from 'lucide-react';
@@ -56,48 +57,59 @@ const Navigation = () => {
 
   return (
     <nav className="bg-gray-900/95 backdrop-blur-sm border-r border-gray-700/50 w-16 min-h-screen p-3 flex-shrink-0 z-[51] flex flex-col justify-between">
-      {/* Navigation Items */}
-      <div className="space-y-3 mt-6">
-        {navItems.map(({ path, icon: Icon, label }) => {
-          const ref = useRef<HTMLAnchorElement>(null);
-          const isActive = location.pathname === path;
-          
-          return (
-            <div
-              key={path}
-              onMouseEnter={() => {
-                if (ref.current) {
-                  setTooltip({ rect: ref.current.getBoundingClientRect(), label });
-                }
-              }}
-              onMouseLeave={() => setTooltip({ rect: null, label: null })}
-              className="relative"
-            >
-              <Link
-                ref={ref}
-                to={path}
-                className={`group flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-200 ${
-                  isActive
-                    ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg'
-                    : 'text-gray-300 hover:bg-gray-800/50 hover:text-white'
-                }`}
-                title={label}
-                tabIndex={0}
+      {/* Logo at the top */}
+      <div className="flex flex-col items-center">
+        <div className="mb-6 mt-2">
+          <img 
+            src="/lovable-uploads/a3da82cf-d79a-4c6d-ba7f-5a33302171b2.png" 
+            alt="ROKO TOKO Logo" 
+            className="w-10 h-10 rounded-full"
+          />
+        </div>
+
+        {/* Navigation Items */}
+        <div className="space-y-3">
+          {navItems.map(({ path, icon: Icon, label }) => {
+            const ref = useRef<HTMLAnchorElement>(null);
+            const isActive = location.pathname === path;
+            
+            return (
+              <div
+                key={path}
+                onMouseEnter={() => {
+                  if (ref.current) {
+                    setTooltip({ rect: ref.current.getBoundingClientRect(), label });
+                  }
+                }}
+                onMouseLeave={() => setTooltip({ rect: null, label: null })}
+                className="relative"
               >
-                <Icon size={20} />
-              </Link>
-              {/* Tooltip is now Portaled */}
-              {tooltip.label === label && tooltip.rect && (
-                <SidebarTooltip
-                  targetRect={tooltip.rect}
-                  show={!!tooltip.rect}
+                <Link
+                  ref={ref}
+                  to={path}
+                  className={`group flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-200 ${
+                    isActive
+                      ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg'
+                      : 'text-gray-300 hover:bg-gray-800/50 hover:text-white'
+                  }`}
+                  title={label}
+                  tabIndex={0}
                 >
-                  {label}
-                </SidebarTooltip>
-              )}
-            </div>
-          );
-        })}
+                  <Icon size={20} />
+                </Link>
+                {/* Tooltip is now Portaled */}
+                {tooltip.label === label && tooltip.rect && (
+                  <SidebarTooltip
+                    targetRect={tooltip.rect}
+                    show={!!tooltip.rect}
+                  >
+                    {label}
+                  </SidebarTooltip>
+                )}
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       {/* Logout Button */}
