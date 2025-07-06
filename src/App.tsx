@@ -20,6 +20,17 @@ import Login from "./pages/Login";
 
 const queryClient = new QueryClient();
 
+// Component to protect admin-only routes
+const AdminOnlyRoute = ({ children }: { children: React.ReactNode }) => {
+  const userRole = localStorage.getItem('userRole') || 'user';
+  
+  if (userRole !== 'admin') {
+    return <Navigate to="/annotation" replace />;
+  }
+  
+  return <>{children}</>;
+};
+
 const App = () => {
   const userRole = localStorage.getItem('userRole') || 'user';
 
@@ -46,10 +57,17 @@ const App = () => {
                               element={
                                 userRole === 'user' 
                                   ? <Navigate to="/annotation" replace /> 
-                                  : <Dashboard />
+                                  : <AdminOnlyRoute><Dashboard /></AdminOnlyRoute>
                               } 
                             />
-                            <Route path="/upload" element={<Upload />} />
+                            <Route 
+                              path="/upload" 
+                              element={
+                                <AdminOnlyRoute>
+                                  <Upload />
+                                </AdminOnlyRoute>
+                              } 
+                            />
                             <Route path="/annotation" element={<Annotation />} />
                             <Route
                               path="/leaderboard"
