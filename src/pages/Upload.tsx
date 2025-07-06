@@ -1,7 +1,8 @@
+
 import React, { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../store/store';
-import { addImages } from '../store/uploadSlice';
+import { setUploadedImages } from '../store/uploadSlice';
 import { Upload as UploadIcon, FileArchive, CheckCircle } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import ImageGrid from '../components/upload/ImageGrid';
@@ -14,7 +15,7 @@ const Upload = () => {
   const imagesPerPage = 12;
 
   const dispatch = useDispatch();
-  const images = useSelector((state: RootState) => state.upload.images);
+  const uploadedImages = useSelector((state: RootState) => state.upload.uploadedImages);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
@@ -40,12 +41,22 @@ const Upload = () => {
     try {
       const imageUrls = await Promise.all(imagePromises);
       const newImages = imageUrls.map((url, index) => ({
-        id: Date.now() + index,
-        name: selectedFiles[index].name,
-        url,
+        _id: {
+          $oid: (Date.now() + index).toString()
+        },
+        imagePath: url,
+        imageName: selectedFiles[index].name,
+        violationDetails: [],
+        createdAt: {
+          $date: new Date().toISOString()
+        },
+        updatedAt: {
+          $date: new Date().toISOString()
+        },
+        __v: 0
       }));
 
-      dispatch(addImages(newImages));
+      dispatch(setUploadedImages([...uploadedImages, ...newImages]));
       setUploadSuccess(true);
     } catch (error) {
       console.error("Upload failed:", error);
@@ -55,8 +66,8 @@ const Upload = () => {
     }
   };
 
-  const totalPages = Math.ceil(images.length / imagesPerPage);
-  const currentImages = images.slice(
+  const totalPages = Math.ceil(uploadedImages.length / imagesPerPage);
+  const currentImages = uploadedImages.slice(
     (currentPage - 1) * imagesPerPage,
     currentPage * imagesPerPage
   );
@@ -126,10 +137,10 @@ const Upload = () => {
       <div className="animate-fade-in" style={{ animationDelay: '400ms' }}>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-bold text-white">Uploaded Images</h2>
-          <div className="text-gray-400">{images.length} images</div>
+          <div className="text-gray-400">{uploadedImages.length} images</div>
         </div>
 
-        {images.length === 0 ? (
+        {uploadedImages.length === 0 ? (
           <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/50 shadow-2xl text-center text-gray-400">
             No images uploaded yet.
           </div>
