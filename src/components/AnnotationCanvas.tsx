@@ -1,5 +1,5 @@
 import React from "react";
-import { ChevronLeft, ChevronRight, Send } from "lucide-react";
+import { ChevronLeft, ChevronRight, Send, CheckCircle } from "lucide-react";
 import { ImageData, BoundingBox, CurrentBox } from "@/types/annotationTypes";
 
 interface AnnotationCanvasProps {
@@ -12,6 +12,7 @@ interface AnnotationCanvasProps {
   canvasRef: React.RefObject<HTMLCanvasElement>;
   boundingBoxes: BoundingBox[];
   currentBox: CurrentBox | null;
+  allViolationsAnnotated: boolean;
   onMouseDown: (e: React.MouseEvent<HTMLCanvasElement>) => void;
   onMouseMove: (e: React.MouseEvent<HTMLCanvasElement>) => void;
   onMouseUp: (e: React.MouseEvent<HTMLCanvasElement>) => void;
@@ -32,6 +33,7 @@ const AnnotationCanvas: React.FC<AnnotationCanvasProps> = ({
   canvasRef,
   boundingBoxes,
   currentBox,
+  allViolationsAnnotated,
   onMouseDown,
   onMouseMove,
   onMouseUp,
@@ -86,11 +88,21 @@ const AnnotationCanvas: React.FC<AnnotationCanvasProps> = ({
       </div>
 
       <div className="mb-4">
-        <h3 className="text-white font-medium mb-2">{currentImageData.imageName}</h3>
+        <div className="flex items-center justify-between">
+          <h3 className="text-white font-medium mb-2">{currentImageData.imageName}</h3>
+          {allViolationsAnnotated && (
+            <div className="flex items-center space-x-2 text-green-400">
+              <CheckCircle className="w-5 h-5" />
+              <span className="text-sm font-medium">All violations annotated</span>
+            </div>
+          )}
+        </div>
         <p className="text-gray-400 text-sm">
-          {isLastImage 
-            ? "This is the last image. Click 'Submit All' to send all annotations." 
-            : "Draw bounding boxes around the violations listed in the sidebar"
+          {allViolationsAnnotated 
+            ? "This image has been fully annotated. All violations have bounding boxes."
+            : isLastImage 
+              ? "This is the last image. Click 'Submit All' to send all annotations." 
+              : "Draw bounding boxes around the violations listed in the sidebar"
           }
         </p>
       </div>
@@ -112,7 +124,7 @@ const AnnotationCanvas: React.FC<AnnotationCanvasProps> = ({
             ref={canvasRef}
             width={IMAGE_WIDTH}
             height={IMAGE_HEIGHT}
-            className="absolute inset-0 cursor-crosshair"
+            className={`absolute inset-0 ${allViolationsAnnotated ? 'cursor-not-allowed' : 'cursor-crosshair'}`}
             onMouseDown={onMouseDown}
             onMouseMove={onMouseMove}
             onMouseUp={onMouseUp}
@@ -161,6 +173,11 @@ const AnnotationCanvas: React.FC<AnnotationCanvasProps> = ({
                 }}
               />
             )}
+
+          {/* Overlay when all violations are annotated */}
+          {allViolationsAnnotated && (
+            <div className="absolute inset-0 bg-green-500/10 border-2 border-green-500/50 rounded-xl pointer-events-none" />
+          )}
         </div>
       </div>
     </div>

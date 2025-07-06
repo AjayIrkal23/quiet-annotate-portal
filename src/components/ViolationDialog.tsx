@@ -49,7 +49,7 @@ const ViolationDialog: React.FC<ViolationDialogProps> = ({
         <AlertDialogHeader>
           <AlertDialogTitle className="text-white">Select Violation Type</AlertDialogTitle>
           <AlertDialogDescription className="text-gray-300">
-            Choose which violation this bounding box represents.
+            Choose which violation this bounding box represents. Only unannotated violations are shown.
           </AlertDialogDescription>
         </AlertDialogHeader>
 

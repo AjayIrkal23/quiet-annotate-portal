@@ -5,6 +5,7 @@ import dashboardReducer from './dashboardSlice';
 import annotationReducer from './annotationSlice';
 import imageReducer from './imageSlice';
 import uploadReducer from './uploadSlice';
+import userReducer from './userSlice';
 
 export const store = configureStore({
   reducer: {
@@ -13,6 +14,7 @@ export const store = configureStore({
     annotation: annotationReducer,
     image: imageReducer,
     upload: uploadReducer,
+    user: userReducer,
   },
 });
 

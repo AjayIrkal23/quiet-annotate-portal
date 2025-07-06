@@ -20,6 +20,8 @@ const Annotation: React.FC = () => {
     boundingBoxes,
     totalImages,
     totalAnnotatedImages,
+    allViolationsAnnotated,
+    availableViolations,
     handleMouseDown,
     handleMouseMove,
     handleMouseUp,
@@ -86,6 +88,7 @@ const Annotation: React.FC = () => {
             canvasRef={canvasRef}
             boundingBoxes={boundingBoxes}
             currentBox={currentBox}
+            allViolationsAnnotated={allViolationsAnnotated}
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
@@ -107,7 +110,7 @@ const Annotation: React.FC = () => {
           }
         }}
         onSelectViolation={handleSelectViolation}
-        violations={currentImageData.violationDetails}
+        violations={availableViolations}
         getSeverityColor={getSeverityColor}
       />
     </div>

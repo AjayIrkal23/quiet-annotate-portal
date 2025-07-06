@@ -1,3 +1,4 @@
+
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../store/store";
@@ -38,6 +39,19 @@ export function useAnnotationManager() {
     imageId => allAnnotations[imageId] && allAnnotations[imageId].length > 0
   ).length;
 
+  // Get used violation names for current image
+  const usedViolations = boundingBoxes.map(box => box.violationName);
+  
+  // Check if all violations are annotated
+  const allViolationsAnnotated = currentImageData 
+    ? currentImageData.violationDetails.length === boundingBoxes.length
+    : false;
+
+  // Get available violations (not yet annotated)
+  const availableViolations = currentImageData 
+    ? currentImageData.violationDetails.filter(v => !usedViolations.includes(v.name))
+    : [];
+
   const flushPendingBox = useCallback(() => {
     if (pendingBox && pendingBox.violationName) {
       const currentBoxes = allAnnotations[imageId] || [];
@@ -48,6 +62,9 @@ export function useAnnotationManager() {
   }, [pendingBox, allAnnotations, imageId, dispatch]);
 
   const startDrawing = (x: number, y: number) => {
+    // Don't allow drawing if all violations are annotated
+    if (allViolationsAnnotated) return;
+    
     setCurrentBox({
       id: uuidv4(),
       x,
@@ -69,7 +86,7 @@ export function useAnnotationManager() {
   };
 
   const finishDrawing = () => {
-    if (!currentBox) return;
+    if (!currentBox || allViolationsAnnotated) return;
     if (
       currentBox.width === undefined ||
       currentBox.height === undefined ||
@@ -97,7 +114,7 @@ export function useAnnotationManager() {
   };
 
   const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!canvasRef.current) return;
+    if (!canvasRef.current || allViolationsAnnotated) return;
     const rect = canvasRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
@@ -105,7 +122,7 @@ export function useAnnotationManager() {
   };
 
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!canvasRef.current) return;
+    if (!canvasRef.current || allViolationsAnnotated) return;
     const rect = canvasRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
@@ -113,6 +130,7 @@ export function useAnnotationManager() {
   };
 
   const handleMouseUp = () => {
+    if (allViolationsAnnotated) return;
     finishDrawing();
   };
 
@@ -221,6 +239,8 @@ export function useAnnotationManager() {
     boundingBoxes,
     totalImages: images.length,
     totalAnnotatedImages,
+    allViolationsAnnotated,
+    availableViolations,
     handleMouseDown,
     handleMouseMove,
     handleMouseUp,
