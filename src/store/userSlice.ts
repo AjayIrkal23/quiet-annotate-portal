@@ -1,4 +1,3 @@
-
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 export interface ValidatedImage {
@@ -17,6 +16,7 @@ interface UserState {
   profile: {
     name: string;
     employeeId: string;
+    role: string | null;
     imagesValidated: number;
     validatedCorrect: number;
     validatedWrong: number;
@@ -30,6 +30,7 @@ const initialState: UserState = {
   profile: {
     name: "John Doe",
     employeeId: "EMP001",
+    role: null, // Will be set from localStorage or login
     imagesValidated: 45,
     validatedCorrect: 38,
     validatedWrong: 7,
@@ -99,6 +100,9 @@ const userSlice = createSlice({
     updateProfile: (state, action: PayloadAction<Partial<typeof state.profile>>) => {
       state.profile = { ...state.profile, ...action.payload };
     },
+    setUserRole: (state, action: PayloadAction<string>) => {
+      state.profile.role = action.payload;
+    },
     addValidatedImage: (state, action: PayloadAction<{ image: ValidatedImage; isCorrect: boolean }>) => {
       if (action.payload.isCorrect) {
         state.validatedImagesCorrect.push(action.payload.image);
@@ -112,5 +116,5 @@ const userSlice = createSlice({
   },
 });
 
-export const { updateProfile, addValidatedImage } = userSlice.actions;
+export const { updateProfile, addValidatedImage, setUserRole } = userSlice.actions;
 export default userSlice.reducer;

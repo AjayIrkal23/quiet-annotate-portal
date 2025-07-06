@@ -1,8 +1,9 @@
-
 import React, { useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Home, Upload, Image, Trophy, User, LogOut } from 'lucide-react';
 import { createPortal } from 'react-dom';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../store/store';
 
 // Floating sidebar tooltip as a portal to <body>
 const SidebarTooltip: React.FC<{
@@ -49,10 +50,12 @@ const Navigation = () => {
     label: string | null;
   }>({ rect: null, label: null });
 
-  const userRole = localStorage.getItem('userRole') || 'user';
+  const userRole = useSelector((state: RootState) => state.user.profile.role);
+  const fallbackRole = localStorage.getItem('userRole') || 'user';
+  const effectiveRole = userRole || fallbackRole;
   
   // Filter navigation items based on user role
-  const navItems = allNavItems.filter(item => item.roles.includes(userRole));
+  const navItems = allNavItems.filter(item => item.roles.includes(effectiveRole));
 
   const handleLogout = () => {
     localStorage.removeItem('isLoggedIn');

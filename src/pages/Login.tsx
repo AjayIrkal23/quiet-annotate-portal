@@ -1,6 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+import { setUserRole } from '../store/userSlice';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,15 +14,20 @@ const Login: React.FC = () => {
   const [role, setRole] = useState<string>('');
   const navigate = useNavigate();
   const location = useLocation();
+  const dispatch = useDispatch();
 
   // Check if user is already logged in
   useEffect(() => {
     const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
     if (isLoggedIn) {
+      const storedRole = localStorage.getItem('userRole');
+      if (storedRole) {
+        dispatch(setUserRole(storedRole));
+      }
       const from = location.state?.from?.pathname || '/';
       navigate(from, { replace: true });
     }
-  }, [navigate, location]);
+  }, [navigate, location, dispatch]);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,6 +36,9 @@ const Login: React.FC = () => {
       localStorage.setItem('isLoggedIn', 'true');
       localStorage.setItem('username', username);
       localStorage.setItem('userRole', role);
+      
+      // Set role in Redux state
+      dispatch(setUserRole(role));
       
       // Redirect to the page they were trying to access, or dashboard
       const from = location.state?.from?.pathname || '/';
