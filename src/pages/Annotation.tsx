@@ -1,9 +1,8 @@
-
 import React from "react";
 import { useAnnotationManager } from "@/hooks/useAnnotationManager";
-import AnnotationCanvas from "@/components/AnnotationCanvas";
-import AnnotationSidebar from "@/components/AnnotationSidebar";
-import ViolationDialog from "@/components/ViolationDialog";
+import AnnotationCanvas from "@/components/annotation/AnnotationCanvas";
+import AnnotationSidebar from "@/components/annotation/AnnotationSidebar";
+import ViolationDialog from "@/components/annotation/ViolationDialog";
 
 const Annotation: React.FC = () => {
   const {

@@ -1,4 +1,3 @@
-
 import React, { useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Home, Upload, Image, Trophy, User, LogOut } from 'lucide-react';

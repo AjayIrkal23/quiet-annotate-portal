@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Trash2, AlertTriangle, AlertCircle, Info, Check } from "lucide-react";
 import { ImageData, ViolationDetail, BoundingBox } from "@/types/annotationTypes";
