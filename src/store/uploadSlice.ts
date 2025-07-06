@@ -36,7 +36,7 @@ const initialState: UploadState = {
         "$oid": "68690639d912ec5777b86bc6"
       },
       "imagePath": "https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=1200&h=800&fit=crop",
-      "imageName": "WhatsApp Image 2025-06-15 at 1.06.38 PM.jpeg",
+      "imageName": "construction-site-image-1.jpeg",
       "violationDetails": [
         {
           "name": "Working at Height Without Fall Protection",
@@ -62,7 +62,7 @@ const initialState: UploadState = {
         "$oid": "68690639d912ec5777b86bc8"
       },
       "imagePath": "https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=1200&h=800&fit=crop",
-      "imageName": "WhatsApp Image 2025-06-15 at 1.06.39 PM (1).jpeg",
+      "imageName": "industrial-floor-image-2.jpeg",
       "violationDetails": [
         {
           "name": "Uneven Flooring and Obstructions",
@@ -93,7 +93,7 @@ const initialState: UploadState = {
         "$oid": "68690639d912ec5777b86bca"
       },
       "imagePath": "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=1200&h=800&fit=crop",
-      "imageName": "WhatsApp Image 2025-06-15 at 1.06.39 PM (2).jpeg",
+      "imageName": "warehouse-ladder-image-3.jpeg",
       "violationDetails": [
         {
           "name": "Damaged or unsecured ladder",

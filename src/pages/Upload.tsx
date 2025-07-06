@@ -2,48 +2,58 @@
 import React, { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../store/store';
-import { setUploadedImages, setTotalZipFiles } from '../store/uploadSlice';
+import { setUploadedImages, setTotalZipFiles, setIsUploading } from '../store/uploadSlice';
 import { Upload as UploadIcon, FileArchive, Image, AlertTriangle } from 'lucide-react';
-import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import StatusCard from '../components/StatusCard';
 
 const Upload = () => {
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [uploading, setUploading] = useState(false);
   const [selectedImage, setSelectedImage] = useState<any>(null);
   const [showImageModal, setShowImageModal] = useState(false);
 
   const dispatch = useDispatch();
-  const { uploadedImages, totalZipFiles } = useSelector((state: RootState) => state.upload);
+  const { uploadedImages, totalZipFiles, isUploading } = useSelector((state: RootState) => state.upload);
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Dummy API function to simulate processing
+  const processDummyApi = async (zipFiles: File[]) => {
+    console.log('Processing zip files through dummy API:', zipFiles);
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    return true;
+  };
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
+    
     const files = Array.from(e.target.files).filter(file => 
       file.name.endsWith('.zip') || file.type.startsWith('image/')
     );
-    setSelectedFiles(files);
-  };
-
-  const handleUpload = async () => {
-    setUploading(true);
     
-    // Simulate zip file processing
-    const zipFiles = selectedFiles.filter(file => file.name.endsWith('.zip'));
-    const imageFiles = selectedFiles.filter(file => file.type.startsWith('image/'));
-    
-    // Process image files
-    const imagePromises = imageFiles.map(file => {
-      return new Promise<string>((resolve) => {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          resolve(reader.result as string);
-        };
-        reader.readAsDataURL(file);
-      });
-    });
+    if (files.length === 0) return;
 
+    dispatch(setIsUploading(true));
+    
     try {
+      // Separate zip files and image files
+      const zipFiles = files.filter(file => file.name.endsWith('.zip'));
+      const imageFiles = files.filter(file => file.type.startsWith('image/'));
+      
+      // Process zip files through dummy API
+      if (zipFiles.length > 0) {
+        await processDummyApi(zipFiles);
+      }
+
+      // Process image files
+      const imagePromises = imageFiles.map(file => {
+        return new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            resolve(reader.result as string);
+          };
+          reader.readAsDataURL(file);
+        });
+      });
+
       const imageUrls = await Promise.all(imagePromises);
       const newImages = imageUrls.map((url, index) => ({
         _id: {
@@ -63,11 +73,11 @@ const Upload = () => {
 
       dispatch(setUploadedImages([...uploadedImages, ...newImages]));
       dispatch(setTotalZipFiles(totalZipFiles + zipFiles.length));
-      setSelectedFiles([]);
+      
     } catch (error) {
       console.error("Upload failed:", error);
     } finally {
-      setUploading(false);
+      dispatch(setIsUploading(false));
     }
   };
 
@@ -122,33 +132,29 @@ const Upload = () => {
       <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/50 shadow-2xl mb-8 animate-fade-in" style={{ animationDelay: '400ms' }}>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-bold text-white">Upload Zip Files</h2>
-          <div className="text-gray-400">{selectedFiles.length} files selected</div>
-        </div>
-
-        <div className="flex items-center space-x-4">
-          <label htmlFor="upload-input" className="cursor-pointer">
-            <div className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition duration-200 flex items-center space-x-2">
-              <FileArchive className="w-4 h-4" />
-              <span>Select Zip Files</span>
+          {isUploading && (
+            <div className="text-orange-400 flex items-center space-x-2">
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-orange-400"></div>
+              <span>Processing...</span>
             </div>
-            <input
-              id="upload-input"
-              type="file"
-              multiple
-              onChange={handleFileSelect}
-              className="hidden"
-              accept=".zip,image/*"
-            />
-          </label>
-
-          <Button
-            onClick={handleUpload}
-            disabled={selectedFiles.length === 0 || uploading}
-            className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold rounded-lg transition duration-200"
-          >
-            {uploading ? "Processing..." : "Upload & Process"}
-          </Button>
+          )}
         </div>
+
+        <label htmlFor="upload-input" className="cursor-pointer">
+          <div className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition duration-200 flex items-center space-x-2 w-fit">
+            <FileArchive className="w-4 h-4" />
+            <span>Select Zip Files</span>
+          </div>
+          <input
+            id="upload-input"
+            type="file"
+            multiple
+            onChange={handleFileSelect}
+            className="hidden"
+            accept=".zip,image/*"
+            disabled={isUploading}
+          />
+        </label>
       </div>
 
       {/* Uploaded Images Grid */}
@@ -179,8 +185,8 @@ const Upload = () => {
                   {image.imageName}
                 </div>
                 {image.violationDetails.length > 0 && (
-                  <div className="absolute top-2 right-2 bg-red-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center font-bold">
-                    {image.violationDetails.length}
+                  <div className="absolute top-2 right-2 bg-red-500 text-white text-xs rounded-full px-2 py-1 font-bold">
+                    {image.violationDetails.length} {image.violationDetails.length === 1 ? 'issue' : 'issues'}
                   </div>
                 )}
                 <div className="absolute inset-0 bg-black/0 hover:bg-black/20 rounded-lg transition-colors duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100">
