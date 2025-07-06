@@ -1,7 +1,5 @@
-
-import React from 'react';
-import { useIsMobile } from '../hooks/use-mobile';
-import { Monitor } from 'lucide-react';
+import React from "react";
+import { Monitor } from "lucide-react";
 
 interface ResponsiveLayoutProps {
   children: React.ReactNode;
@@ -15,8 +13,8 @@ const ResponsiveLayout = ({ children }: ResponsiveLayoutProps) => {
       setScreenWidth(window.innerWidth);
     };
 
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   if (screenWidth < 700) {
@@ -30,7 +28,8 @@ const ResponsiveLayout = ({ children }: ResponsiveLayoutProps) => {
             UI Not Supported
           </h2>
           <p className="text-gray-400 mb-4">
-            This application requires a minimum screen width of 700px for the best experience.
+            This application requires a minimum screen width of 700px for the
+            best experience.
           </p>
           <p className="text-gray-500 text-sm">
             Please use a laptop or desktop computer to access this application.

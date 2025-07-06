@@ -1,9 +1,9 @@
-import React, { useRef, useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Home, Upload, Image, Trophy, User, LogOut } from 'lucide-react';
-import { createPortal } from 'react-dom';
-import { useSelector } from 'react-redux';
-import { RootState } from '../../store/store';
+import React, { useRef, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Home, Upload, Image, Trophy, User, LogOut } from "lucide-react";
+import { createPortal } from "react-dom";
+import { useSelector } from "react-redux";
+import { RootState } from "../../store/store";
 
 // Floating sidebar tooltip as a portal to <body>
 const SidebarTooltip: React.FC<{
@@ -15,12 +15,12 @@ const SidebarTooltip: React.FC<{
 
   // Tooltip appears right beside the sidebar icon (to the right, vertically centered)
   const style: React.CSSProperties = {
-    position: 'fixed',
+    position: "fixed",
     top: targetRect.top + targetRect.height / 2,
     left: targetRect.right + 10,
-    transform: 'translateY(-50%)',
+    transform: "translateY(-50%)",
     zIndex: 9999,
-    pointerEvents: 'none',
+    pointerEvents: "none",
   };
 
   return createPortal(
@@ -35,11 +35,21 @@ const SidebarTooltip: React.FC<{
 };
 
 const allNavItems = [
-  { path: '/', icon: Home, label: 'Dashboard', roles: ['admin'] },
-  { path: '/upload', icon: Upload, label: 'Upload', roles: ['admin'] },
-  { path: '/annotation', icon: Image, label: 'Annotation', roles: ['admin', 'user'] },
-  { path: '/leaderboard', icon: Trophy, label: 'Leaderboard', roles: ['admin', 'user'] },
-  { path: '/profile', icon: User, label: 'Profile', roles: ['admin', 'user'] },
+  { path: "/", icon: Home, label: "Dashboard", roles: ["admin"] },
+  { path: "/upload", icon: Upload, label: "Upload", roles: ["admin"] },
+  {
+    path: "/annotation",
+    icon: Image,
+    label: "Annotation",
+    roles: ["admin", "user"],
+  },
+  {
+    path: "/leaderboard",
+    icon: Trophy,
+    label: "Leaderboard",
+    roles: ["admin", "user"],
+  },
+  { path: "/profile", icon: User, label: "Profile", roles: ["admin", "user"] },
 ];
 
 const Navigation = () => {
@@ -51,17 +61,19 @@ const Navigation = () => {
   }>({ rect: null, label: null });
 
   const userRole = useSelector((state: RootState) => state.user.profile.role);
-  const fallbackRole = localStorage.getItem('userRole') || 'user';
+  const fallbackRole = localStorage.getItem("userRole") || "user";
   const effectiveRole = userRole || fallbackRole;
-  
+
   // Filter navigation items based on user role
-  const navItems = allNavItems.filter(item => item.roles.includes(effectiveRole));
+  const navItems = allNavItems.filter((item) =>
+    item.roles.includes(effectiveRole)
+  );
 
   const handleLogout = () => {
-    localStorage.removeItem('isLoggedIn');
-    localStorage.removeItem('username');
-    localStorage.removeItem('userRole');
-    navigate('/login');
+    localStorage.removeItem("isLoggedIn");
+    localStorage.removeItem("username");
+    localStorage.removeItem("userRole");
+    navigate("/login");
   };
 
   return (
@@ -69,9 +81,9 @@ const Navigation = () => {
       {/* Logo at the top */}
       <div className="flex flex-col items-center">
         <div className="mb-6 mt-2">
-          <img 
-            src="/lovable-uploads/f50f8f9a-45fe-4553-9ccd-7c841a3b3c07.png" 
-            alt="ROKO TOKO Logo" 
+          <img
+            src="/lovable-uploads/a3da82cf-d79a-4c6d-ba7f-5a33302171b2.png"
+            alt="ROKO TOKO Logo"
             className="w-10 h-10 rounded-full"
           />
         </div>
@@ -81,13 +93,16 @@ const Navigation = () => {
           {navItems.map(({ path, icon: Icon, label }) => {
             const ref = useRef<HTMLAnchorElement>(null);
             const isActive = location.pathname === path;
-            
+
             return (
               <div
                 key={path}
                 onMouseEnter={() => {
                   if (ref.current) {
-                    setTooltip({ rect: ref.current.getBoundingClientRect(), label });
+                    setTooltip({
+                      rect: ref.current.getBoundingClientRect(),
+                      label,
+                    });
                   }
                 }}
                 onMouseLeave={() => setTooltip({ rect: null, label: null })}
@@ -98,8 +113,8 @@ const Navigation = () => {
                   to={path}
                   className={`group flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-200 ${
                     isActive
-                      ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg'
-                      : 'text-gray-300 hover:bg-gray-800/50 hover:text-white'
+                      ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg"
+                      : "text-gray-300 hover:bg-gray-800/50 hover:text-white"
                   }`}
                   title={label}
                   tabIndex={0}
@@ -124,7 +139,12 @@ const Navigation = () => {
       {/* Logout Button */}
       <div className="mb-6">
         <div
-          onMouseEnter={(e) => setTooltip({ rect: e.currentTarget.getBoundingClientRect(), label: 'Logout' })}
+          onMouseEnter={(e) =>
+            setTooltip({
+              rect: e.currentTarget.getBoundingClientRect(),
+              label: "Logout",
+            })
+          }
           onMouseLeave={() => setTooltip({ rect: null, label: null })}
           className="relative"
         >
@@ -135,11 +155,8 @@ const Navigation = () => {
           >
             <LogOut size={20} />
           </button>
-          {tooltip.label === 'Logout' && tooltip.rect && (
-            <SidebarTooltip
-              targetRect={tooltip.rect}
-              show={!!tooltip.rect}
-            >
+          {tooltip.label === "Logout" && tooltip.rect && (
+            <SidebarTooltip targetRect={tooltip.rect} show={!!tooltip.rect}>
               Logout
             </SidebarTooltip>
           )}
