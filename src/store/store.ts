@@ -4,6 +4,7 @@ import leaderboardReducer from './leaderboardSlice';
 import dashboardReducer from './dashboardSlice';
 import annotationReducer from './annotationSlice';
 import imageReducer from './imageSlice';
+import uploadReducer from './uploadSlice';
 
 export const store = configureStore({
   reducer: {
@@ -11,6 +12,7 @@ export const store = configureStore({
     dashboard: dashboardReducer,
     annotation: annotationReducer,
     image: imageReducer,
+    upload: uploadReducer,
   },
 });
 
