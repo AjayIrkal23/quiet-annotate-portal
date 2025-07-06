@@ -1,6 +1,7 @@
+
 import React, { useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Home, Upload, Image, Trophy, LogOut } from 'lucide-react';
+import { Home, Upload, Image, Trophy, User, LogOut } from 'lucide-react';
 import { createPortal } from 'react-dom';
 
 // Floating sidebar tooltip as a portal to <body>
@@ -37,6 +38,7 @@ const navItems = [
   { path: '/upload', icon: Upload, label: 'Upload' },
   { path: '/annotation', icon: Image, label: 'Annotation' },
   { path: '/leaderboard', icon: Trophy, label: 'Leaderboard' },
+  { path: '/profile', icon: User, label: 'Profile' },
 ];
 
 const Navigation = () => {

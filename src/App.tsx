@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -12,6 +13,7 @@ import Dashboard from "./pages/Dashboard";
 import Upload from "./pages/Upload";
 import Annotation from "./pages/Annotation";
 import Leaderboard from "./pages/Leaderboard";
+import UserProfile from "./pages/UserProfile";
 import NotFound from "./pages/NotFound";
 
 import Login from "./pages/Login";
@@ -43,6 +45,7 @@ const App = () => (
                             path="/leaderboard"
                             element={<Leaderboard />}
                           />
+                          <Route path="/profile" element={<UserProfile />} />
 
                           <Route path="*" element={<NotFound />} />
                         </Routes>
