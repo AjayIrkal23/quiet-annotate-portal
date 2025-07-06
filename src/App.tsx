@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Provider } from "react-redux";
 import { store } from "./store/store";
 import Navigation from "./components/general/Navigation";
@@ -20,46 +20,57 @@ import Login from "./pages/Login";
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <Provider store={store}>
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <ResponsiveLayout>
-            <Routes>
-              <Route path="/login" element={<Login />} />
-              <Route
-                path="*"
-                element={
-                  <ProtectedRoute>
-                    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 w-full flex">
-                      <Navigation />
-                      <main className="flex-1 min-w-0">
-                        <Routes>
-                          <Route path="/" element={<Dashboard />} />
-                          <Route path="/upload" element={<Upload />} />
-                          <Route path="/annotation" element={<Annotation />} />
-                          <Route
-                            path="/leaderboard"
-                            element={<Leaderboard />}
-                          />
-                          <Route path="/profile" element={<UserProfile />} />
+const App = () => {
+  const userRole = localStorage.getItem('userRole') || 'user';
 
-                          <Route path="*" element={<NotFound />} />
-                        </Routes>
-                      </main>
-                    </div>
-                  </ProtectedRoute>
-                }
-              />
-            </Routes>
-          </ResponsiveLayout>
-        </BrowserRouter>
-      </TooltipProvider>
-    </QueryClientProvider>
-  </Provider>
-);
+  return (
+    <Provider store={store}>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <ResponsiveLayout>
+              <Routes>
+                <Route path="/login" element={<Login />} />
+                <Route
+                  path="*"
+                  element={
+                    <ProtectedRoute>
+                      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 w-full flex">
+                        <Navigation />
+                        <main className="flex-1 min-w-0">
+                          <Routes>
+                            <Route 
+                              path="/" 
+                              element={
+                                userRole === 'user' 
+                                  ? <Navigate to="/annotation" replace /> 
+                                  : <Dashboard />
+                              } 
+                            />
+                            <Route path="/upload" element={<Upload />} />
+                            <Route path="/annotation" element={<Annotation />} />
+                            <Route
+                              path="/leaderboard"
+                              element={<Leaderboard />}
+                            />
+                            <Route path="/profile" element={<UserProfile />} />
+
+                            <Route path="*" element={<NotFound />} />
+                          </Routes>
+                        </main>
+                      </div>
+                    </ProtectedRoute>
+                  }
+                />
+              </Routes>
+            </ResponsiveLayout>
+          </BrowserRouter>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </Provider>
+  );
+};
 
 export default App;
