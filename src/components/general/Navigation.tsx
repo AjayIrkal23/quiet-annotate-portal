@@ -34,7 +34,7 @@ const SidebarTooltip: React.FC<{
 };
 
 const allNavItems = [
-  { path: '/', icon: Home, label: 'Dashboard', roles: ['admin', 'user'] },
+  { path: '/', icon: Home, label: 'Dashboard', roles: ['admin'] },
   { path: '/upload', icon: Upload, label: 'Upload', roles: ['admin'] },
   { path: '/annotation', icon: Image, label: 'Annotation', roles: ['admin', 'user'] },
   { path: '/leaderboard', icon: Trophy, label: 'Leaderboard', roles: ['admin', 'user'] },
