@@ -33,12 +33,12 @@ const SidebarTooltip: React.FC<{
   );
 };
 
-const navItems = [
-  { path: '/', icon: Home, label: 'Dashboard' },
-  { path: '/upload', icon: Upload, label: 'Upload' },
-  { path: '/annotation', icon: Image, label: 'Annotation' },
-  { path: '/leaderboard', icon: Trophy, label: 'Leaderboard' },
-  { path: '/profile', icon: User, label: 'Profile' },
+const allNavItems = [
+  { path: '/', icon: Home, label: 'Dashboard', roles: ['admin', 'user'] },
+  { path: '/upload', icon: Upload, label: 'Upload', roles: ['admin'] },
+  { path: '/annotation', icon: Image, label: 'Annotation', roles: ['admin', 'user'] },
+  { path: '/leaderboard', icon: Trophy, label: 'Leaderboard', roles: ['admin', 'user'] },
+  { path: '/profile', icon: User, label: 'Profile', roles: ['admin', 'user'] },
 ];
 
 const Navigation = () => {
@@ -49,9 +49,15 @@ const Navigation = () => {
     label: string | null;
   }>({ rect: null, label: null });
 
+  const userRole = localStorage.getItem('userRole') || 'user';
+  
+  // Filter navigation items based on user role
+  const navItems = allNavItems.filter(item => item.roles.includes(userRole));
+
   const handleLogout = () => {
     localStorage.removeItem('isLoggedIn');
     localStorage.removeItem('username');
+    localStorage.removeItem('userRole');
     navigate('/login');
   };
 
@@ -61,7 +67,7 @@ const Navigation = () => {
       <div className="flex flex-col items-center">
         <div className="mb-6 mt-2">
           <img 
-            src="/lovable-uploads/a3da82cf-d79a-4c6d-ba7f-5a33302171b2.png" 
+            src="/lovable-uploads/f50f8f9a-45fe-4553-9ccd-7c841a3b3c07.png" 
             alt="ROKO TOKO Logo" 
             className="w-10 h-10 rounded-full"
           />

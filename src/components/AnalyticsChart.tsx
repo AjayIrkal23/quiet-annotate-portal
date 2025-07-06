@@ -1,16 +1,16 @@
 
 import React from 'react';
-import { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { BarChart3 } from 'lucide-react';
 
 const data = [
-  { name: 'Mon', annotations: 120, verifications: 98 },
-  { name: 'Tue', annotations: 150, verifications: 132 },
-  { name: 'Wed', annotations: 180, verifications: 165 },
-  { name: 'Thu', annotations: 220, verifications: 198 },
-  { name: 'Fri', annotations: 280, verifications: 245 },
-  { name: 'Sat', annotations: 190, verifications: 176 },
-  { name: 'Sun', annotations: 160, verifications: 142 },
+  { name: 'Mon', annotated: 120, valid: 98, wrong: 22 },
+  { name: 'Tue', annotated: 150, valid: 125, wrong: 25 },
+  { name: 'Wed', annotated: 180, valid: 155, wrong: 25 },
+  { name: 'Thu', annotated: 220, valid: 190, wrong: 30 },
+  { name: 'Fri', annotated: 280, valid: 245, wrong: 35 },
+  { name: 'Sat', annotated: 190, valid: 165, wrong: 25 },
+  { name: 'Sun', annotated: 160, valid: 140, wrong: 20 },
 ];
 
 const AnalyticsChart = () => {
@@ -22,23 +22,13 @@ const AnalyticsChart = () => {
         </div>
         <div>
           <h2 className="text-xl font-bold text-white">Weekly Analytics</h2>
-          <p className="text-gray-400 text-sm">Annotation vs Verification trends</p>
+          <p className="text-gray-400 text-sm">Annotation performance trends</p>
         </div>
       </div>
       
       <div className="h-64">
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={data}>
-            <defs>
-              <linearGradient id="colorAnnotations" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.3}/>
-                <stop offset="95%" stopColor="#3B82F6" stopOpacity={0}/>
-              </linearGradient>
-              <linearGradient id="colorVerifications" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#10B981" stopOpacity={0.3}/>
-                <stop offset="95%" stopColor="#10B981" stopOpacity={0}/>
-              </linearGradient>
-            </defs>
+          <LineChart data={data}>
             <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
             <XAxis dataKey="name" stroke="#9CA3AF" />
             <YAxis stroke="#9CA3AF" />
@@ -50,23 +40,29 @@ const AnalyticsChart = () => {
                 color: '#F9FAFB'
               }} 
             />
-            <Area 
+            <Legend />
+            <Line 
               type="monotone" 
-              dataKey="annotations" 
+              dataKey="annotated" 
               stroke="#3B82F6" 
               strokeWidth={2}
-              fillOpacity={1} 
-              fill="url(#colorAnnotations)" 
+              name="Annotated Images"
             />
-            <Area 
+            <Line 
               type="monotone" 
-              dataKey="verifications" 
+              dataKey="valid" 
               stroke="#10B981" 
               strokeWidth={2}
-              fillOpacity={1} 
-              fill="url(#colorVerifications)" 
+              name="Valid Count"
             />
-          </AreaChart>
+            <Line 
+              type="monotone" 
+              dataKey="wrong" 
+              stroke="#EF4444" 
+              strokeWidth={2}
+              name="Wrong Count"
+            />
+          </LineChart>
         </ResponsiveContainer>
       </div>
     </div>

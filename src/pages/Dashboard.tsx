@@ -1,17 +1,21 @@
+
 import React from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '../store/store';
 import StatusCard from '../components/StatusCard';
 import AnalyticsChart from '../components/AnalyticsChart';
-import ActivityFeed from '../components/ActivityFeed';
+import MonthlyAnalytics from '../components/MonthlyAnalytics';
 import { TrendingUp, Users, CheckCircle, Clock } from 'lucide-react';
+
 const Dashboard = () => {
   const {
     totalAccImages,
     totalImagesOptioned,
     totalImagesWaiting
   } = useSelector((state: RootState) => state.dashboard);
-  return <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-6">
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-6">
       {/* Header Section */}
       <div className="mb-8 animate-fade-in">
         <div className="flex items-center space-x-3 mb-2">
@@ -37,13 +41,13 @@ const Dashboard = () => {
       {/* Analytics Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         <AnalyticsChart />
-        <ActivityFeed />
+        <MonthlyAnalytics />
       </div>
 
       {/* Performance Metrics */}
       <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/50 shadow-2xl animate-fade-in" style={{
-      animationDelay: '600ms'
-    }}>
+        animationDelay: '600ms'
+      }}>
         <h2 className="text-2xl font-bold text-white mb-6 flex items-center space-x-3">
           <div className="w-6 h-6 bg-gradient-to-r from-green-500 to-blue-500 rounded-md"></div>
           <span>Performance Overview</span>
@@ -63,6 +67,8 @@ const Dashboard = () => {
           </div>
         </div>
       </div>
-    </div>;
+    </div>
+  );
 };
+
 export default Dashboard;

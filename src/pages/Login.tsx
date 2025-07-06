@@ -4,10 +4,12 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const Login: React.FC = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [role, setRole] = useState<string>('');
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -23,9 +25,10 @@ const Login: React.FC = () => {
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     // Dummy login - accepts any username/password
-    if (username.trim() && password.trim()) {
+    if (username.trim() && password.trim() && role) {
       localStorage.setItem('isLoggedIn', 'true');
       localStorage.setItem('username', username);
+      localStorage.setItem('userRole', role);
       
       // Redirect to the page they were trying to access, or dashboard
       const from = location.state?.from?.pathname || '/';
@@ -46,7 +49,7 @@ const Login: React.FC = () => {
             Welcome Back
           </CardTitle>
           <CardDescription className="text-center text-gray-400">
-            Enter any username and password to continue
+            Enter credentials and select your role to continue
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -78,6 +81,20 @@ const Login: React.FC = () => {
                 className="bg-gray-700/50 border-gray-600 text-white placeholder:text-gray-400"
                 required
               />
+            </div>
+            <div className="space-y-2">
+              <label htmlFor="role" className="text-sm font-medium text-gray-300">
+                Role
+              </label>
+              <Select value={role} onValueChange={setRole} required>
+                <SelectTrigger className="bg-gray-700/50 border-gray-600 text-white">
+                  <SelectValue placeholder="Select your role" />
+                </SelectTrigger>
+                <SelectContent className="bg-gray-700 border-gray-600">
+                  <SelectItem value="admin" className="text-white hover:bg-gray-600">Admin</SelectItem>
+                  <SelectItem value="user" className="text-white hover:bg-gray-600">User</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <Button
               type="submit"
