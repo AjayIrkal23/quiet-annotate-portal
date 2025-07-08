@@ -1,30 +1,41 @@
-
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
-import { setUserRole } from '../store/userSlice';
+import React, { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { setUserRole } from "../store/userSlice";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const Login: React.FC = () => {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [role, setRole] = useState<string>('');
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [role, setRole] = useState<string>("");
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useDispatch();
 
   // Check if user is already logged in
   useEffect(() => {
-    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+    const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
     if (isLoggedIn) {
-      const storedRole = localStorage.getItem('userRole');
+      const storedRole = localStorage.getItem("userRole");
       if (storedRole) {
         dispatch(setUserRole(storedRole));
       }
-      const from = location.state?.from?.pathname || '/';
+      const from = location.state?.from?.pathname || "/";
       navigate(from, { replace: true });
     }
   }, [navigate, location, dispatch]);
@@ -33,15 +44,15 @@ const Login: React.FC = () => {
     e.preventDefault();
     // Dummy login - accepts any username/password
     if (username.trim() && password.trim() && role) {
-      localStorage.setItem('isLoggedIn', 'true');
-      localStorage.setItem('username', username);
-      localStorage.setItem('userRole', role);
-      
+      localStorage.setItem("isLoggedIn", "true");
+      localStorage.setItem("username", username);
+      localStorage.setItem("userRole", role);
+
       // Set role in Redux state
       dispatch(setUserRole(role));
-      
+
       // Redirect to the page they were trying to access, or dashboard
-      const from = location.state?.from?.pathname || '/';
+      const from = location.state?.from?.pathname || "/";
       navigate(from, { replace: true });
     }
   };
@@ -51,8 +62,12 @@ const Login: React.FC = () => {
       <Card className="w-full max-w-md bg-gray-800/50 backdrop-blur-sm border-gray-700/50">
         <CardHeader className="space-y-1">
           <div className="flex items-center justify-center mb-4">
-            <div className="w-12 h-12 bg-gradient-to-r from-emerald-400 to-pink-400 rounded-lg flex items-center justify-center">
-              <span className="text-white text-2xl font-bold">🔒</span>
+            <div className="">
+              <img
+                src="/lovable-uploads/a3da82cf-d79a-4c6d-ba7f-5a33302171b2.png"
+                alt="ROKO TOKO Logo"
+                className="w-14 h-14 rounded-full"
+              />
             </div>
           </div>
           <CardTitle className="text-2xl font-bold text-center text-white">
@@ -65,7 +80,10 @@ const Login: React.FC = () => {
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-2">
-              <label htmlFor="username" className="text-sm font-medium text-gray-300">
+              <label
+                htmlFor="username"
+                className="text-sm font-medium text-gray-300"
+              >
                 Username
               </label>
               <Input
@@ -79,7 +97,10 @@ const Login: React.FC = () => {
               />
             </div>
             <div className="space-y-2">
-              <label htmlFor="password" className="text-sm font-medium text-gray-300">
+              <label
+                htmlFor="password"
+                className="text-sm font-medium text-gray-300"
+              >
                 Password
               </label>
               <Input
@@ -93,7 +114,10 @@ const Login: React.FC = () => {
               />
             </div>
             <div className="space-y-2">
-              <label htmlFor="role" className="text-sm font-medium text-gray-300">
+              <label
+                htmlFor="role"
+                className="text-sm font-medium text-gray-300"
+              >
                 Role
               </label>
               <Select value={role} onValueChange={setRole} required>
@@ -101,8 +125,18 @@ const Login: React.FC = () => {
                   <SelectValue placeholder="Select your role" />
                 </SelectTrigger>
                 <SelectContent className="bg-gray-700 border-gray-600">
-                  <SelectItem value="admin" className="text-white hover:bg-gray-600">Admin</SelectItem>
-                  <SelectItem value="user" className="text-white hover:bg-gray-600">User</SelectItem>
+                  <SelectItem
+                    value="admin"
+                    className="text-white hover:bg-gray-600"
+                  >
+                    Admin
+                  </SelectItem>
+                  <SelectItem
+                    value="user"
+                    className="text-white hover:bg-gray-600"
+                  >
+                    User
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>

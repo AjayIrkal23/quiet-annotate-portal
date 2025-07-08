@@ -1,6 +1,7 @@
 import React from "react";
 import { ChevronLeft, ChevronRight, Send, CheckCircle } from "lucide-react";
 import { ImageData, BoundingBox, CurrentBox } from "@/types/annotationTypes";
+import { BASEURL } from "@/lib/utils";
 
 interface AnnotationCanvasProps {
   currentImageData: ImageData;
@@ -64,18 +65,16 @@ const AnnotationCanvas: React.FC<AnnotationCanvasProps> = ({
             <ChevronLeft className="w-4 h-4" />
             <span>Previous</span>
           </button>
-          
-          {isLastImage && (
-            <button
-              onClick={onSubmitAnnotations}
-              disabled={totalAnnotatedImages === 0}
-              className="flex items-center space-x-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg transition-all duration-200 font-medium"
-            >
-              <Send className="w-4 h-4" />
-              <span>Submit All ({totalAnnotatedImages})</span>
-            </button>
-          )}
-          
+
+          <button
+            onClick={onSubmitAnnotations}
+            disabled={totalAnnotatedImages === 0}
+            className="flex items-center space-x-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg transition-all duration-200 font-medium"
+          >
+            <Send className="w-4 h-4" />
+            <span>Submit All ({totalAnnotatedImages})</span>
+          </button>
+
           <button
             onClick={onNextImage}
             disabled={currentImageIndex === totalImages - 1}
@@ -89,21 +88,24 @@ const AnnotationCanvas: React.FC<AnnotationCanvasProps> = ({
 
       <div className="mb-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-white font-medium mb-2">{currentImageData.imageName}</h3>
+          <h3 className="text-white font-medium mb-2">
+            {currentImageData.imageName}
+          </h3>
           {allViolationsAnnotated && (
             <div className="flex items-center space-x-2 text-green-400">
               <CheckCircle className="w-5 h-5" />
-              <span className="text-sm font-medium">All violations annotated</span>
+              <span className="text-sm font-medium">
+                All violations annotated
+              </span>
             </div>
           )}
         </div>
         <p className="text-gray-400 text-sm">
-          {allViolationsAnnotated 
+          {allViolationsAnnotated
             ? "This image has been fully annotated. All violations have bounding boxes."
-            : isLastImage 
-              ? "This is the last image. Click 'Submit All' to send all annotations." 
-              : "Draw bounding boxes around the violations listed in the sidebar"
-          }
+            : isLastImage
+            ? "This is the last image. Click 'Submit All' to send all annotations."
+            : "Draw bounding boxes around the violations listed in the sidebar"}
         </p>
       </div>
 
@@ -114,7 +116,7 @@ const AnnotationCanvas: React.FC<AnnotationCanvasProps> = ({
         >
           <img
             ref={imageRef}
-            src={currentImageData.imagePath}
+            src={`${BASEURL}/${currentImageData.imagePath}`}
             alt={currentImageData.imageName}
             className="absolute inset-0 w-full h-full object-cover"
             style={{ width: IMAGE_WIDTH, height: IMAGE_HEIGHT }}
@@ -124,7 +126,9 @@ const AnnotationCanvas: React.FC<AnnotationCanvasProps> = ({
             ref={canvasRef}
             width={IMAGE_WIDTH}
             height={IMAGE_HEIGHT}
-            className={`absolute inset-0 ${allViolationsAnnotated ? 'cursor-not-allowed' : 'cursor-crosshair'}`}
+            className={`absolute inset-0 ${
+              allViolationsAnnotated ? "cursor-not-allowed" : "cursor-crosshair"
+            }`}
             onMouseDown={onMouseDown}
             onMouseMove={onMouseMove}
             onMouseUp={onMouseUp}
@@ -132,9 +136,13 @@ const AnnotationCanvas: React.FC<AnnotationCanvasProps> = ({
 
           {/* Render bounding boxes */}
           {boundingBoxes.map((box) => {
-            const violation = currentImageData.violationDetails.find(v => v.name === box.violationName);
-            const color = violation ? getSeverityColor(violation.severity) : '#ef4444';
-            
+            const violation = currentImageData.violationDetails.find(
+              (v) => v.name === box.violationName
+            );
+            const color = violation
+              ? getSeverityColor(violation.severity)
+              : "#ef4444";
+
             return (
               <div
                 key={box.id}
@@ -148,7 +156,7 @@ const AnnotationCanvas: React.FC<AnnotationCanvasProps> = ({
                   backgroundColor: "transparent",
                 }}
               >
-                <div 
+                <div
                   className="absolute -top-8 left-0 px-2 py-1 rounded text-xs font-medium text-white"
                   style={{ backgroundColor: color }}
                 >
@@ -159,20 +167,24 @@ const AnnotationCanvas: React.FC<AnnotationCanvasProps> = ({
           })}
 
           {/* Render current drawing box */}
-          {currentBox &&
-            currentBox.width !== 0 &&
-            currentBox.height !== 0 && (
-              <div
-                className="absolute border-2 border-dashed border-red-500 rounded pointer-events-none"
-                style={{
-                  left: Math.min(currentBox.x!, currentBox.x! + currentBox.width!),
-                  top: Math.min(currentBox.y!, currentBox.y! + currentBox.height!),
-                  width: Math.abs(currentBox.width!),
-                  height: Math.abs(currentBox.height!),
-                  backgroundColor: "transparent",
-                }}
-              />
-            )}
+          {currentBox && currentBox.width !== 0 && currentBox.height !== 0 && (
+            <div
+              className="absolute border-2 border-dashed border-red-500 rounded pointer-events-none"
+              style={{
+                left: Math.min(
+                  currentBox.x!,
+                  currentBox.x! + currentBox.width!
+                ),
+                top: Math.min(
+                  currentBox.y!,
+                  currentBox.y! + currentBox.height!
+                ),
+                width: Math.abs(currentBox.width!),
+                height: Math.abs(currentBox.height!),
+                backgroundColor: "transparent",
+              }}
+            />
+          )}
 
           {/* Overlay when all violations are annotated */}
           {allViolationsAnnotated && (

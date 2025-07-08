@@ -3,15 +3,18 @@ import { useAnnotationManager } from "@/hooks/useAnnotationManager";
 import AnnotationCanvas from "@/components/annotation/AnnotationCanvas";
 import AnnotationSidebar from "@/components/annotation/AnnotationSidebar";
 import ViolationDialog from "@/components/annotation/ViolationDialog";
+import { Loader2 } from "lucide-react"; // optional: any spinner icon
+import { useSelector } from "react-redux";
+import { RootState } from "@/store/store";
 
 const Annotation: React.FC = () => {
+  const loading = useSelector((state: RootState) => state.image.loading);
   const {
     IMAGE_WIDTH,
     IMAGE_HEIGHT,
     currentImageIndex,
     currentImageData,
     currentBox,
-    pendingBox,
     violationDialogOpen,
     setViolationDialogOpen,
     imageRef,
@@ -32,12 +35,25 @@ const Annotation: React.FC = () => {
     getSeverityColor,
   } = useAnnotationManager();
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-4 lg:p-6 flex items-center justify-center">
+        <div className="text-white flex flex-col items-center gap-3">
+          <Loader2 className="w-8 h-8 animate-spin text-white" />
+          <p className="text-sm text-gray-300">Loading images...</p>
+        </div>
+      </div>
+    );
+  }
+
   if (!currentImageData) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-4 lg:p-6 flex items-center justify-center">
         <div className="text-white text-center">
           <h1 className="text-2xl font-bold mb-2">No Images Available</h1>
-          <p className="text-gray-400">Please check back later for images to annotate.</p>
+          <p className="text-gray-400">
+            Please check back later for images to annotate.
+          </p>
         </div>
       </div>
     );
@@ -57,7 +73,8 @@ const Annotation: React.FC = () => {
                 Safety Violation Annotation
               </h1>
               <p className="text-gray-400 text-sm">
-                Annotate the safety violations identified in the image ({totalAnnotatedImages} images annotated)
+                Annotate the safety violations identified in the image (
+                {totalAnnotatedImages} images annotated)
               </p>
             </div>
           </div>

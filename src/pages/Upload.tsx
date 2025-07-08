@@ -1,79 +1,55 @@
+import React, { useEffect, useState } from "react";
+import { useSelector, useDispatch } from "react-redux";
+import { RootState } from "../store/store";
+import { setIsUploading } from "../store/uploadSlice";
 
-import React, { useState } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
-import { RootState } from '../store/store';
-import { setUploadedImages, setTotalZipFiles, setIsUploading } from '../store/uploadSlice';
-import { Upload as UploadIcon, FileArchive, Image, AlertTriangle } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import StatusCard from '../components/StatusCard';
+import { fetchImageStats } from "@/store/thunks/imageStatsThunk";
+import { fetchPaginatedImages } from "@/store/thunks/fetchPaginatedImages";
+import { uploadZipThunk } from "@/store/thunks/uploadZipThunk";
+
+import { Upload as UploadIcon, FileArchive, Image } from "lucide-react";
+
+import StatusCard from "../components/StatusCard";
+import ImageCard from "@/components/upload/ImageCard";
+import ImageModal from "@/components/upload/ImageModal";
+
+import { UploadedImage } from "@/store/uploadSlice";
 
 const Upload = () => {
-  const [selectedImage, setSelectedImage] = useState<any>(null);
+  const [selectedImage, setSelectedImage] = useState<UploadedImage | null>(
+    null
+  );
   const [showImageModal, setShowImageModal] = useState(false);
 
-  const dispatch = useDispatch();
-  const { uploadedImages, totalZipFiles, isUploading } = useSelector((state: RootState) => state.upload);
+  const [page, setPage] = useState(1);
+  const limit = 30;
 
-  // Dummy API function to simulate processing
-  const processDummyApi = async (zipFiles: File[]) => {
-    console.log('Processing zip files through dummy API:', zipFiles);
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    return true;
-  };
+  const dispatch = useDispatch();
+  const {
+    uploadedImages,
+    totalZipFiles,
+    isUploading,
+    imageCount,
+  } = useSelector((state: RootState) => state.upload);
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
-    
-    const files = Array.from(e.target.files).filter(file => 
-      file.name.endsWith('.zip') || file.type.startsWith('image/')
+
+    const zipFiles = Array.from(e.target.files).filter((file) =>
+      file.name.endsWith(".zip")
     );
-    
-    if (files.length === 0) return;
+
+    if (zipFiles.length === 0) return;
 
     dispatch(setIsUploading(true));
-    
+
     try {
-      // Separate zip files and image files
-      const zipFiles = files.filter(file => file.name.endsWith('.zip'));
-      const imageFiles = files.filter(file => file.type.startsWith('image/'));
-      
-      // Process zip files through dummy API
-      if (zipFiles.length > 0) {
-        await processDummyApi(zipFiles);
+      for (const zip of zipFiles) {
+        await dispatch<any>(uploadZipThunk(zip));
       }
-
-      // Process image files
-      const imagePromises = imageFiles.map(file => {
-        return new Promise<string>((resolve) => {
-          const reader = new FileReader();
-          reader.onloadend = () => {
-            resolve(reader.result as string);
-          };
-          reader.readAsDataURL(file);
-        });
-      });
-
-      const imageUrls = await Promise.all(imagePromises);
-      const newImages = imageUrls.map((url, index) => ({
-        _id: {
-          $oid: (Date.now() + index).toString()
-        },
-        imagePath: url,
-        imageName: imageFiles[index].name,
-        violationDetails: [],
-        createdAt: {
-          $date: new Date().toISOString()
-        },
-        updatedAt: {
-          $date: new Date().toISOString()
-        },
-        __v: 0
-      }));
-
-      dispatch(setUploadedImages([...uploadedImages, ...newImages]));
-      dispatch(setTotalZipFiles(totalZipFiles + zipFiles.length));
-      
+      await dispatch<any>(fetchImageStats());
+      await dispatch<any>(fetchPaginatedImages({ page: 1, limit }));
+      setPage(1);
     } catch (error) {
       console.error("Upload failed:", error);
     } finally {
@@ -81,23 +57,42 @@ const Upload = () => {
     }
   };
 
-  const handleImageClick = (image: any) => {
+  const getPaginationRange = (page: number, totalPages: number) => {
+    const range: (number | "...")[] = [];
+
+    if (totalPages <= 5) {
+      for (let i = 1; i <= totalPages; i++) range.push(i);
+    } else {
+      range.push(1);
+      if (page > 3) range.push("...");
+
+      const start = Math.max(2, page - 1);
+      const end = Math.min(totalPages - 1, page + 1);
+
+      for (let i = start; i <= end; i++) range.push(i);
+
+      if (page < totalPages - 2) range.push("...");
+      range.push(totalPages);
+    }
+
+    return range;
+  };
+
+  useEffect(() => {
+    dispatch<any>(fetchImageStats());
+    dispatch<any>(fetchPaginatedImages({ page, limit }));
+  }, [dispatch, page]);
+
+  const handleImageClick = (image: UploadedImage) => {
     setSelectedImage(image);
     setShowImageModal(true);
   };
 
-  const getSeverityColor = (severity: string) => {
-    switch (severity) {
-      case 'high': return '#ef4444';
-      case 'medium': return '#f59e0b';
-      case 'low': return '#10b981';
-      default: return '#6b7280';
-    }
-  };
+  const totalPages = Math.ceil(imageCount / limit);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-6">
-      {/* Header Section */}
+      {/* Header */}
       <div className="mb-8 animate-fade-in">
         <div className="flex items-center space-x-3 mb-2">
           <div className="w-8 h-8 bg-gradient-to-r from-orange-500 to-red-600 rounded-lg flex items-center justify-center">
@@ -112,7 +107,7 @@ const Upload = () => {
         </p>
       </div>
 
-      {/* Stats Cards */}
+      {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
         <StatusCard
           title="Total Zip Files"
@@ -122,14 +117,17 @@ const Upload = () => {
         />
         <StatusCard
           title="Total Images"
-          value={uploadedImages.length}
+          value={imageCount}
           icon={Image}
           delay={200}
         />
       </div>
 
-      {/* Upload Section */}
-      <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/50 shadow-2xl mb-8 animate-fade-in" style={{ animationDelay: '400ms' }}>
+      {/* Upload Form */}
+      <div
+        className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/50 shadow-2xl mb-8 animate-fade-in"
+        style={{ animationDelay: "400ms" }}
+      >
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-bold text-white">Upload Zip Files</h2>
           {isUploading && (
@@ -151,14 +149,14 @@ const Upload = () => {
             multiple
             onChange={handleFileSelect}
             className="hidden"
-            accept=".zip,image/*"
+            accept=".zip"
             disabled={isUploading}
           />
         </label>
       </div>
 
-      {/* Uploaded Images Grid */}
-      <div className="animate-fade-in" style={{ animationDelay: '600ms' }}>
+      {/* Image Grid */}
+      <div className="animate-fade-in" style={{ animationDelay: "600ms" }}>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-bold text-white">Processed Images</h2>
           <div className="text-gray-400">{uploadedImages.length} images</div>
@@ -169,95 +167,47 @@ const Upload = () => {
             No images processed yet. Upload zip files to get started.
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {uploadedImages.map((image) => (
-              <div 
-                key={image._id.$oid} 
-                className="relative group cursor-pointer hover:scale-105 transition-transform duration-200"
-                onClick={() => handleImageClick(image)}
-              >
-                <img
-                  src={image.imagePath}
-                  alt={image.imageName}
-                  className="w-full h-48 object-cover rounded-lg shadow-md"
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {uploadedImages.map((image) => (
+                <ImageCard
+                  key={image._id}
+                  image={image}
+                  onClick={() => handleImageClick(image)}
                 />
-                <div className="absolute top-2 left-2 bg-gray-900/70 text-white text-sm rounded-md px-2 py-1">
-                  {image.imageName}
-                </div>
-                {image.violationDetails.length > 0 && (
-                  <div className="absolute top-2 right-2 bg-red-500 text-white text-xs rounded-full px-2 py-1 font-bold">
-                    {image.violationDetails.length} {image.violationDetails.length === 1 ? 'issue' : 'issues'}
-                  </div>
-                )}
-                <div className="absolute inset-0 bg-black/0 hover:bg-black/20 rounded-lg transition-colors duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100">
-                  <AlertTriangle className="w-8 h-8 text-white" />
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+
+            {/* Pagination Controls */}
+            <div className="flex justify-center mt-8 space-x-4">
+              <button
+                onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
+                disabled={page === 1}
+                className="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 disabled:opacity-50"
+              >
+                Previous
+              </button>
+              <span className="text-gray-300 font-medium px-4 py-2">
+                Page {page} of {totalPages}
+              </span>
+              <button
+                onClick={() => setPage((prev) => prev + 1)}
+                disabled={page >= totalPages}
+                className="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 disabled:opacity-50"
+              >
+                Next
+              </button>
+            </div>
+          </>
         )}
       </div>
 
-      {/* Image Modal */}
-      <Dialog open={showImageModal} onOpenChange={setShowImageModal}>
-        <DialogContent className="bg-gray-800 border-gray-700 text-white max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-white flex items-center space-x-2">
-              <AlertTriangle className="w-5 h-5 text-yellow-500" />
-              <span>Safety Issues Detected</span>
-            </DialogTitle>
-          </DialogHeader>
-          
-          {selectedImage && (
-            <div className="space-y-4">
-              <div className="relative">
-                <img
-                  src={selectedImage.imagePath}
-                  alt={selectedImage.imageName}
-                  className="w-full max-h-96 object-contain rounded-lg"
-                />
-                <div className="absolute top-2 left-2 bg-gray-900/70 text-white text-sm rounded-md px-2 py-1">
-                  {selectedImage.imageName}
-                </div>
-              </div>
-              
-              <div className="space-y-3">
-                <h3 className="text-lg font-semibold text-white">
-                  Detected Issues ({selectedImage.violationDetails.length})
-                </h3>
-                
-                {selectedImage.violationDetails.length === 0 ? (
-                  <p className="text-gray-400">No safety issues detected in this image.</p>
-                ) : (
-                  <div className="space-y-3">
-                    {selectedImage.violationDetails.map((violation: any, index: number) => (
-                      <div key={index} className="bg-gray-700/50 rounded-lg p-4 border border-gray-600">
-                        <div className="flex items-center space-x-2 mb-2">
-                          <div 
-                            className="w-3 h-3 rounded-full" 
-                            style={{ backgroundColor: getSeverityColor(violation.severity) }}
-                          />
-                          <h4 className="font-medium text-white">{violation.name}</h4>
-                          <span className={`text-xs px-2 py-1 rounded-full ${
-                            violation.severity === 'high' 
-                              ? 'bg-red-500/20 text-red-400' 
-                              : violation.severity === 'medium'
-                              ? 'bg-yellow-500/20 text-yellow-400'
-                              : 'bg-green-500/20 text-green-400'
-                          }`}>
-                            {violation.severity} severity
-                          </span>
-                        </div>
-                        <p className="text-gray-300 text-sm">{violation.description}</p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      {/* Modal */}
+      <ImageModal
+        open={showImageModal}
+        onClose={() => setShowImageModal(false)}
+        image={selectedImage}
+      />
     </div>
   );
 };

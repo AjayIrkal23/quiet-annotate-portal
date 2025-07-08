@@ -1,14 +1,14 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 export interface ValidatedImage {
+  _id: string;
   imagePath: string;
   employeeId: string;
   imageName: string;
-  violationDetails: {
-    name: string;
+  details: {
+    violationName: string;
     description: string;
-    severity: 'high' | 'medium' | 'low';
-    isValid: boolean;
+    isValid: boolean | null;
   }[];
 }
 
@@ -24,86 +24,41 @@ interface UserState {
   };
   validatedImagesCorrect: ValidatedImage[];
   validatedImagesWrong: ValidatedImage[];
+  validatedImagesPending: ValidatedImage[]; // ✅ New field
 }
 
 const initialState: UserState = {
   profile: {
-    name: "John Doe",
-    employeeId: "EMP001",
-    role: null, // Will be set from localStorage or login
+    name: "Ajay Irkal",
+    employeeId: "AjayIrkal",
+    role: "admin",
     imagesValidated: 45,
     validatedCorrect: 38,
     validatedWrong: 7,
-    leaderboardPosition: 3,
+    leaderboardPosition: 1,
   },
-  validatedImagesCorrect: [
-    {
-      imagePath: "https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=1200&h=800&fit=crop",
-      employeeId: "EMP001",
-      imageName: "WhatsApp Image 2025-06-15 at 1.06.38 PM.jpeg",
-      violationDetails: [
-        {
-          name: "Working at Height Without Fall Protection",
-          description: "An individual is standing on top of a truck without any visible fall protection equipment.",
-          severity: "high",
-          isValid: true
-        },
-        {
-          name: "Lack of Personal Protective Equipment (PPE)",
-          description: "Individuals are not wearing any visible personal protective equipment such as helmets or reflective clothing.",
-          severity: "high",
-          isValid: true
-        }
-      ]
-    },
-    {
-      imagePath: "https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=1200&h=800&fit=crop",
-      employeeId: "EMP001",
-      imageName: "Construction Site Image 2.jpeg",
-      violationDetails: [
-        {
-          name: "Uneven Flooring and Obstructions",
-          description: "The floor appears to be uneven with a metal strip protruding.",
-          severity: "high",
-          isValid: true
-        }
-      ]
-    }
-  ],
-  validatedImagesWrong: [
-    {
-      imagePath: "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=1200&h=800&fit=crop",
-      employeeId: "EMP001",
-      imageName: "WhatsApp Image 2025-06-15 at 1.06.39 PM.jpeg",
-      violationDetails: [
-        {
-          name: "Damaged or unsecured ladder",
-          description: "The ladder attached to the structure does not appear to be secured.",
-          severity: "high",
-          isValid: false
-        },
-        {
-          name: "Accumulated dust or debris",
-          description: "There is visible accumulated dust or debris on the ground.",
-          severity: "medium",
-          isValid: true
-        }
-      ]
-    }
-  ]
+  validatedImagesCorrect: [],
+  validatedImagesWrong: [],
+  validatedImagesPending: [], // ✅ Init pending
 };
 
 const userSlice = createSlice({
-  name: 'user',
+  name: "user",
   initialState,
   reducers: {
-    updateProfile: (state, action: PayloadAction<Partial<typeof state.profile>>) => {
+    updateProfile: (
+      state,
+      action: PayloadAction<Partial<typeof state.profile>>
+    ) => {
       state.profile = { ...state.profile, ...action.payload };
     },
     setUserRole: (state, action: PayloadAction<string>) => {
       state.profile.role = action.payload;
     },
-    addValidatedImage: (state, action: PayloadAction<{ image: ValidatedImage; isCorrect: boolean }>) => {
+    addValidatedImage: (
+      state,
+      action: PayloadAction<{ image: ValidatedImage; isCorrect: boolean }>
+    ) => {
       if (action.payload.isCorrect) {
         state.validatedImagesCorrect.push(action.payload.image);
         state.profile.validatedCorrect += 1;
@@ -113,8 +68,53 @@ const userSlice = createSlice({
       }
       state.profile.imagesValidated += 1;
     },
+    setPendingValidatedImages: (
+      state,
+      action: PayloadAction<ValidatedImage[]>
+    ) => {
+      state.validatedImagesPending = action.payload;
+    },
+    setCorrectValidatedImages: (
+      state,
+      action: PayloadAction<ValidatedImage[]>
+    ) => {
+      state.validatedImagesCorrect = action.payload;
+    },
+    setWrongValidatedImages: (
+      state,
+      action: PayloadAction<ValidatedImage[]>
+    ) => {
+      state.validatedImagesWrong = action.payload;
+    },
+    setValidationStats: (
+      state,
+      action: PayloadAction<{
+        validatedCorrect: number;
+        validatedWrong: number;
+      }>
+    ) => {
+      state.profile.validatedCorrect = action.payload.validatedCorrect;
+      state.profile.validatedWrong = action.payload.validatedWrong;
+      state.profile.imagesValidated =
+        action.payload.validatedCorrect + action.payload.validatedWrong;
+    },
+    removePendingImage: (state, action: PayloadAction<string>) => {
+      state.validatedImagesPending = state.validatedImagesPending.filter(
+        (img) => img.imageName !== action.payload
+      );
+    },
   },
 });
 
-export const { updateProfile, addValidatedImage, setUserRole } = userSlice.actions;
+export const {
+  updateProfile,
+  addValidatedImage,
+  setUserRole,
+  setPendingValidatedImages,
+  setCorrectValidatedImages, // ✅ now exported
+  setWrongValidatedImages, // ✅ now exported
+  setValidationStats, // ✅ include here
+  removePendingImage,
+} = userSlice.actions;
+
 export default userSlice.reducer;

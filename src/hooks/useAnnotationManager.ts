@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../store/store";
@@ -9,6 +8,9 @@ import {
 import { nextImage, previousImage } from "../store/imageSlice";
 import { v4 as uuidv4 } from "uuid";
 import { BoundingBox, CurrentBox } from "@/types/annotationTypes";
+import axios from "axios";
+import { BASEURL } from "@/lib/utils";
+import { fetchUniqueImages } from "./../store/thunks/fetchUniqueImages";
 
 export function useAnnotationManager() {
   const dispatch = useDispatch();
@@ -19,6 +21,10 @@ export function useAnnotationManager() {
   const allAnnotations = useSelector(
     (state: RootState) => state.annotation.annotations
   );
+
+  useEffect(() => {
+    dispatch<any>(fetchUniqueImages("AjayIrkal")); // Replace with dynamic employeeId if needed
+  }, []);
 
   const [imageWidth] = useState(800);
   const [imageHeight] = useState(600);
@@ -31,25 +37,27 @@ export function useAnnotationManager() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const currentImageData = images[currentImageIndex];
-  const imageId = currentImageData?._id.$oid || "";
+  const imageId = currentImageData?._id || "";
   const boundingBoxes: BoundingBox[] = allAnnotations[imageId] || [];
 
   // Calculate total annotated images
   const totalAnnotatedImages = Object.keys(allAnnotations).filter(
-    imageId => allAnnotations[imageId] && allAnnotations[imageId].length > 0
+    (imageId) => allAnnotations[imageId] && allAnnotations[imageId].length > 0
   ).length;
 
   // Get used violation names for current image
-  const usedViolations = boundingBoxes.map(box => box.violationName);
-  
+  const usedViolations = boundingBoxes.map((box) => box.violationName);
+
   // Check if all violations are annotated
-  const allViolationsAnnotated = currentImageData 
+  const allViolationsAnnotated = currentImageData
     ? currentImageData.violationDetails.length === boundingBoxes.length
     : false;
 
   // Get available violations (not yet annotated)
-  const availableViolations = currentImageData 
-    ? currentImageData.violationDetails.filter(v => !usedViolations.includes(v.name))
+  const availableViolations = currentImageData
+    ? currentImageData.violationDetails.filter(
+        (v) => !usedViolations.includes(v.name)
+      )
     : [];
 
   const flushPendingBox = useCallback(() => {
@@ -64,7 +72,7 @@ export function useAnnotationManager() {
   const startDrawing = (x: number, y: number) => {
     // Don't allow drawing if all violations are annotated
     if (allViolationsAnnotated) return;
-    
+
     setCurrentBox({
       id: uuidv4(),
       x,
@@ -164,50 +172,69 @@ export function useAnnotationManager() {
     setViolationDialogOpen(false);
   };
 
-  const handleSubmitAnnotations = () => {
-    // Collect data from all images that have annotations
-    const allImageData = images.map((image) => {
-      const imageId = image._id.$oid;
-      const annotations = allAnnotations[imageId] || [];
-      
-      if (annotations.length === 0) return null;
+  const handleSubmitAnnotations = async () => {
+    const allImageData = images
+      .map((image) => {
+        const imageId = image._id;
+        const annotations = allAnnotations[imageId] || [];
 
-      return {
-        imageName: image.imageName,
-        imageSize: {
-          width: imageWidth,
-          height: imageHeight,
-        },
-        details: annotations.map((box) => {
-          const violation = image.violationDetails.find(
-            (v) => v.name === box.violationName
-          );
-          return {
-            violationName: box.violationName,
-            description: violation?.description || "",
-            boundingBox: {
-              x: box.x,
-              y: box.y,
-              width: box.width,
-              height: box.height,
-            },
-          };
-        }),
-      };
-    }).filter(Boolean); // Remove null entries
+        if (annotations.length === 0) return null;
 
-    console.log("Submitting all annotated images data:", allImageData);
+        return {
+          employeeId: "AjayIrkal",
+          imageName: image.imageName,
+          imagePath: image.imagePath, // ✅ Add imagePath here
+          imageSize: {
+            width: imageWidth,
+            height: imageHeight,
+          },
+          details: annotations.map((box) => {
+            const violation = image.violationDetails.find(
+              (v) => v.name === box.violationName
+            );
+            return {
+              violationName: box.violationName,
+              description: violation?.description || "",
+              boundingBox: {
+                x: box.x,
+                y: box.y,
+                width: box.width,
+                height: box.height,
+              },
+            };
+          }),
+        };
+      })
+      .filter(Boolean); // Remove null entries
 
-    // Simulate API call
-    setTimeout(() => {
-      console.log(`Successfully submitted ${allImageData.length} annotated images!`);
-      alert(`Successfully submitted ${allImageData.length} annotated images!`);
-    }, 1000);
+    if (allImageData.length === 0) {
+      alert("⚠️ No annotations to submit.");
+      return;
+    }
+
+    try {
+      const response = await axios.post(
+        `${BASEURL}/anotatedImages/bulk`,
+        allImageData
+      );
+
+      console.log("✅ API Response:", response.data);
+      alert(
+        `✅ ${response.data.created} images saved, ${response.data.skipped} skipped.`
+      );
+
+      dispatch<any>(fetchUniqueImages("AjayIrkal")); // Replace with dynamic employeeId if needed
+    } catch (error) {
+      console.error("❌ API error:", error);
+      alert("❌ Failed to submit annotations. See console for details.");
+    }
 
     // Clear all annotations after submission
-    Object.keys(allAnnotations).forEach(imageId => {
-      if (allAnnotations[imageId] && allAnnotations[imageId].length > 0) {
-        dispatch(submitAnnotations({ imageId, annotations: allAnnotations[imageId] }));
+    Object.keys(allAnnotations).forEach((imageId) => {
+      if (allAnnotations[imageId]?.length > 0) {
+        dispatch(
+          submitAnnotations({ imageId, annotations: allAnnotations[imageId] })
+        );
       }
     });
   };

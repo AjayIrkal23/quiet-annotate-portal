@@ -1,24 +1,14 @@
-
 export interface ViolationDetail {
   name: string;
   description: string;
-  severity: 'high' | 'medium' | 'low';
+  severity: "high" | "medium" | "low";
 }
 
 export interface ImageData {
-  _id: {
-    $oid: string;
-  };
+  _id?: string;
   imagePath: string;
   imageName: string;
   violationDetails: ViolationDetail[];
-  createdAt: {
-    $date: string;
-  };
-  updatedAt: {
-    $date: string;
-  };
-  __v: number;
 }
 
 export interface BoundingBox {
