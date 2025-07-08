@@ -46,22 +46,22 @@ export function useAnnotationManager() {
   ).length;
 
   // Get used violation names for current image
-  const usedViolations = boundingBoxes.map((box) => box.violationName);
+  const usedViolations = boundingBoxes?.map((box) => box?.violationName);
 
   // Check if all violations are annotated
   const allViolationsAnnotated = currentImageData
-    ? currentImageData.violationDetails.length === boundingBoxes.length
+    ? currentImageData?.violationDetails?.length === boundingBoxes?.length
     : false;
 
   // Get available violations (not yet annotated)
   const availableViolations = currentImageData
-    ? currentImageData.violationDetails.filter(
-        (v) => !usedViolations.includes(v.name)
+    ? currentImageData?.violationDetails?.filter(
+        (v) => !usedViolations?.includes(v.name)
       )
     : [];
 
   const flushPendingBox = useCallback(() => {
-    if (pendingBox && pendingBox.violationName) {
+    if (pendingBox && pendingBox?.violationName) {
       const currentBoxes = allAnnotations[imageId] || [];
       const updatedBoxes = [...currentBoxes, pendingBox];
       dispatch(saveAnnotationForImage({ imageId, boxes: updatedBoxes }));

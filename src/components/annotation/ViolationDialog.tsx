@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -9,7 +9,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { ViolationDetail } from "@/types/annotationTypes";
 
 interface ViolationDialogProps {
@@ -25,13 +31,13 @@ const ViolationDialog: React.FC<ViolationDialogProps> = ({
   onOpenChange,
   onSelectViolation,
   violations,
-  getSeverityColor
+  getSeverityColor,
 }) => {
-  const [selectedViolation, setSelectedViolation] = useState<string>('');
+  const [selectedViolation, setSelectedViolation] = useState<string>("");
 
   useEffect(() => {
     if (!open) {
-      setSelectedViolation('');
+      setSelectedViolation("");
     }
   }, [open]);
 
@@ -46,28 +52,42 @@ const ViolationDialog: React.FC<ViolationDialogProps> = ({
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent className="bg-gray-800 border-gray-700 text-white">
         <AlertDialogHeader>
-          <AlertDialogTitle className="text-white">Select Violation Type</AlertDialogTitle>
+          <AlertDialogTitle className="text-white">
+            Select Violation Type
+          </AlertDialogTitle>
           <AlertDialogDescription className="text-gray-300">
-            Choose which violation this bounding box represents. Only unannotated violations are shown.
+            Choose which violation this bounding box represents. Only
+            unannotated violations are shown.
           </AlertDialogDescription>
         </AlertDialogHeader>
 
         <div className="space-y-4">
-          <Select value={selectedViolation} onValueChange={setSelectedViolation}>
+          <Select
+            value={selectedViolation}
+            onValueChange={setSelectedViolation}
+          >
             <SelectTrigger className="w-full bg-gray-700 border-gray-600 text-white">
               <SelectValue placeholder="Select violation type" />
             </SelectTrigger>
             <SelectContent className="bg-gray-800 border-gray-600">
-              {violations.map(violation => (
-                <SelectItem key={violation.name} value={violation.name} className="text-white hover:bg-gray-700">
+              {violations?.map((violation) => (
+                <SelectItem
+                  key={violation.name}
+                  value={violation.name}
+                  className="text-white hover:bg-gray-700"
+                >
                   <div className="flex items-center space-x-2">
-                    <div 
-                      className="w-3 h-3 rounded-full" 
-                      style={{ backgroundColor: getSeverityColor(violation.severity) }} 
+                    <div
+                      className="w-3 h-3 rounded-full"
+                      style={{
+                        backgroundColor: getSeverityColor(violation.severity),
+                      }}
                     />
                     <div className="flex flex-col">
                       <span className="font-medium">{violation.name}</span>
-                      <span className="text-xs text-gray-400">{violation.severity} severity</span>
+                      <span className="text-xs text-gray-400">
+                        {violation.severity} severity
+                      </span>
                     </div>
                   </div>
                 </SelectItem>
@@ -81,7 +101,10 @@ const ViolationDialog: React.FC<ViolationDialogProps> = ({
                 <strong>Description:</strong>
               </div>
               <div className="text-sm text-gray-400 mt-1">
-                {violations.find(v => v.name === selectedViolation)?.description}
+                {
+                  violations?.find((v) => v.name === selectedViolation)
+                    ?.description
+                }
               </div>
             </div>
           )}
@@ -91,7 +114,7 @@ const ViolationDialog: React.FC<ViolationDialogProps> = ({
           <AlertDialogCancel className="bg-gray-700 hover:bg-gray-600 text-white border-gray-600">
             Cancel
           </AlertDialogCancel>
-          <AlertDialogAction 
+          <AlertDialogAction
             onClick={handleSelectViolation}
             disabled={!selectedViolation}
             className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
