@@ -28,13 +28,15 @@ interface ImageModalProps {
 }
 
 const getSeverityColor = (severity: string) => {
-  switch (severity) {
+  switch (severity.toLowerCase()) {
+    case "critical":
+      return "#b91c1c";
     case "high":
       return "#ef4444";
     case "medium":
-      return "#f59e0b";
+      return "#f97316";
     case "low":
-      return "#10b981";
+      return "#eab308";
     default:
       return "#6b7280";
   }

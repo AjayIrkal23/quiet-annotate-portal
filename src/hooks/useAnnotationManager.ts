@@ -240,7 +240,9 @@ export function useAnnotationManager() {
   };
 
   const getSeverityColor = (severity: string) => {
-    switch (severity) {
+    switch (severity.toLowerCase()) {
+      case "critical":
+        return "#b91c1c";
       case "high":
         return "#ef4444";
       case "medium":
@@ -251,7 +253,6 @@ export function useAnnotationManager() {
         return "#6b7280";
     }
   };
-
   return {
     IMAGE_WIDTH: imageWidth,
     IMAGE_HEIGHT: imageHeight,

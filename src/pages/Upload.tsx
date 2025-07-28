@@ -57,31 +57,19 @@ const Upload = () => {
     }
   };
 
-  const getPaginationRange = (page: number, totalPages: number) => {
-    const range: (number | "...")[] = [];
-
-    if (totalPages <= 5) {
-      for (let i = 1; i <= totalPages; i++) range.push(i);
-    } else {
-      range.push(1);
-      if (page > 3) range.push("...");
-
-      const start = Math.max(2, page - 1);
-      const end = Math.min(totalPages - 1, page + 1);
-
-      for (let i = start; i <= end; i++) range.push(i);
-
-      if (page < totalPages - 2) range.push("...");
-      range.push(totalPages);
-    }
-
-    return range;
-  };
-
   useEffect(() => {
     dispatch<any>(fetchImageStats());
     dispatch<any>(fetchPaginatedImages({ page, limit }));
   }, [dispatch, page]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      dispatch<any>(fetchImageStats());
+      dispatch<any>(fetchPaginatedImages({ page, limit }));
+    }, 8000);
+
+    return () => clearInterval(interval);
+  }, [dispatch, page, limit]);
 
   const handleImageClick = (image: UploadedImage) => {
     setSelectedImage(image);

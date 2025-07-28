@@ -6,4 +6,4 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 
-export const BASEURL = "http://34.10.207.88:3005"
+export const BASEURL = "http://localhost:3005"
