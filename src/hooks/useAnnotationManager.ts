@@ -304,7 +304,7 @@ export function useAnnotationManager() {
       );
       console.log("✅ API Response:", response.data);
       toast.success(
-        `✅ ${response.data.created} images saved, ${response.data.skipped} skipped.`,
+        `${response.data.created} images saved, ${response.data.skipped} skipped.`,
         {
           duration: 4000,
           position: "top-right",
