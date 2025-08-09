@@ -6,6 +6,7 @@ import annotationReducer from './annotationSlice';
 import imageReducer from './imageSlice';
 import uploadReducer from './uploadSlice';
 import userReducer from './userSlice';
+import validationReducer from './validationSlice';
 
 export const store = configureStore({
   reducer: {
@@ -15,6 +16,7 @@ export const store = configureStore({
     image: imageReducer,
     upload: uploadReducer,
     user: userReducer,
+    validation: validationReducer,
   },
 });
 
