@@ -1,6 +1,7 @@
 export interface ViolationDetail {
   name: string;
   description: string;
+  isHumanAdded?: boolean;
   severity: "critical" | "high" | "medium" | "low";
 }
 

@@ -1,8 +1,19 @@
 import React, { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { ViolationDetail } from "@/types/annotationTypes";
 
@@ -12,7 +23,11 @@ interface AddViolationDialogProps {
   onSubmit: (violation: ViolationDetail) => void;
 }
 
-const AddViolationDialog: React.FC<AddViolationDialogProps> = ({ open, onOpenChange, onSubmit }) => {
+const AddViolationDialog: React.FC<AddViolationDialogProps> = ({
+  open,
+  onOpenChange,
+  onSubmit,
+}) => {
   const [name, setName] = useState("");
   const [severity, setSeverity] = useState<string>("");
   const [description, setDescription] = useState("");
@@ -30,6 +45,7 @@ const AddViolationDialog: React.FC<AddViolationDialogProps> = ({ open, onOpenCha
     const violation: ViolationDetail = {
       name: name.trim(),
       severity: severity.toLowerCase() as ViolationDetail["severity"],
+      isHumanAdded: true,
       description: description.trim(),
     };
     onSubmit(violation);
@@ -44,7 +60,9 @@ const AddViolationDialog: React.FC<AddViolationDialogProps> = ({ open, onOpenCha
         </DialogHeader>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm text-gray-300 mb-1">Violation name</label>
+            <label className="block text-sm text-gray-300 mb-1">
+              Violation name
+            </label>
             <Input
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -59,14 +77,22 @@ const AddViolationDialog: React.FC<AddViolationDialogProps> = ({ open, onOpenCha
                 <SelectValue placeholder="Select severity" />
               </SelectTrigger>
               <SelectContent className="bg-gray-800 border-gray-600 z-50">
-                <SelectItem value="CRITICAL" className="text-white">CRITICAL</SelectItem>
-                <SelectItem value="HIGH" className="text-white">HIGH</SelectItem>
-                <SelectItem value="MEDIUM" className="text-white">MEDIUM</SelectItem>
+                <SelectItem value="CRITICAL" className="text-white">
+                  CRITICAL
+                </SelectItem>
+                <SelectItem value="HIGH" className="text-white">
+                  HIGH
+                </SelectItem>
+                <SelectItem value="MEDIUM" className="text-white">
+                  MEDIUM
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>
           <div>
-            <label className="block text-sm text-gray-300 mb-1">Description</label>
+            <label className="block text-sm text-gray-300 mb-1">
+              Description
+            </label>
             <Textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
