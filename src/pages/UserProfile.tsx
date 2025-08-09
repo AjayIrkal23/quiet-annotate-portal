@@ -1,58 +1,40 @@
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../store/store";
-import {
-  User,
-  Trophy,
-  CheckCircle,
-  XCircle,
-  Eye,
-  Clock,
-  Loader2,
-} from "lucide-react";
+import { User, Trophy, CheckCircle, XCircle, Eye, Clock, Loader2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { fetchAllValidatedImages } from "@/store/thunks/fetchAllValidatedImages";
 import ImageCard from "@/components/ImageCardProfile";
-
 const UserProfile = () => {
   const {
     profile,
     validatedImagesCorrect,
     validatedImagesWrong,
     validatedImagesPending,
-    loading,
+    loading
   } = useSelector((state: RootState) => state.user);
   const dispatch = useDispatch();
-
   useEffect(() => {
     if (profile?.employeeId) {
-      dispatch<any>(
-        fetchAllValidatedImages({ employeeId: profile.employeeId })
-      );
+      dispatch<any>(fetchAllValidatedImages({
+        employeeId: profile.employeeId
+      }));
     }
   }, [dispatch, profile?.employeeId]);
-
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center p-6">
+    return <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center p-6">
         <div className="flex flex-col items-center space-y-4">
           <Loader2 className="w-8 h-8 animate-spin text-white" />
           <p className="text-gray-400 text-lg">Loading profile...</p>
         </div>
-      </div>
-    );
+      </div>;
   }
-
   if (!profile) {
-    return (
-      <div className="min-h-screen bg-gray-900 text-white p-6">
+    return <div className="min-h-screen bg-gray-900 text-white p-6">
         Profile not found
-      </div>
-    );
+      </div>;
   }
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-6">
+  return <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-6">
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center space-x-3 mb-2">
@@ -77,13 +59,9 @@ const UserProfile = () => {
             <div>
               <h3 className="text-white font-bold text-lg">{profile.name}</h3>
               <p className="text-gray-400 text-sm">ID: {profile.employeeId}</p>
-              <p className="text-gray-400 text-sm">Email: {profile.email}</p>
-              <p className="text-gray-400 text-sm">
-                Department: {profile.department}
-              </p>
-              <p className="text-gray-400 text-sm">
-                Role: {profile.role || "N/A"}
-              </p>
+              
+              
+              
             </div>
           </div>
         </div>
@@ -119,50 +97,33 @@ const UserProfile = () => {
       <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl border border-gray-700/50 p-6">
         <Tabs defaultValue="correct" className="w-full">
           <TabsList className="grid w-full grid-cols-3 bg-gray-700">
-            <TabsTrigger
-              value="correct"
-              className="data-[state=active]:bg-green-600"
-            >
+            <TabsTrigger value="correct" className="data-[state=active]:bg-green-600">
               Validated Correct ({validatedImagesCorrect.length})
             </TabsTrigger>
-            <TabsTrigger
-              value="wrong"
-              className="data-[state=active]:bg-red-600"
-            >
+            <TabsTrigger value="wrong" className="data-[state=active]:bg-red-600">
               Validated Wrong ({validatedImagesWrong.length})
             </TabsTrigger>
-            <TabsTrigger
-              value="pending"
-              className="data-[state=active]:bg-yellow-600"
-            >
+            <TabsTrigger value="pending" className="data-[state=active]:bg-yellow-600">
               Pending Validation ({validatedImagesPending.length})
             </TabsTrigger>
           </TabsList>
           <TabsContent value="correct" className="mt-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {validatedImagesCorrect.map((image) => (
-                <ImageCard key={image._id} image={image} isCorrect={true} />
-              ))}
+              {validatedImagesCorrect.map(image => <ImageCard key={image._id} image={image} isCorrect={true} />)}
             </div>
           </TabsContent>
           <TabsContent value="wrong" className="mt-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {validatedImagesWrong.map((image) => (
-                <ImageCard key={image._id} image={image} isCorrect={false} />
-              ))}
+              {validatedImagesWrong.map(image => <ImageCard key={image._id} image={image} isCorrect={false} />)}
             </div>
           </TabsContent>
           <TabsContent value="pending" className="mt-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {validatedImagesPending.map((image) => (
-                <ImageCard key={image._id} image={image} isCorrect={null} />
-              ))}
+              {validatedImagesPending.map(image => <ImageCard key={image._id} image={image} isCorrect={null} />)}
             </div>
           </TabsContent>
         </Tabs>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default UserProfile;
