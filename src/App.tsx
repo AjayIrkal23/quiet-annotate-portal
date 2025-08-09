@@ -15,6 +15,7 @@ import Leaderboard from "./pages/Leaderboard";
 import UserProfile from "./pages/UserProfile";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
+import ViolationValidation from "./pages/ViolationValidation";
 
 const queryClient = new QueryClient();
 
@@ -62,6 +63,14 @@ const AppContent = () => {
                       element={
                         <AdminOnlyRoute>
                           <Upload />
+                        </AdminOnlyRoute>
+                      }
+                    />
+                    <Route
+                      path="/validation"
+                      element={
+                        <AdminOnlyRoute>
+                          <ViolationValidation />
                         </AdminOnlyRoute>
                       }
                     />
