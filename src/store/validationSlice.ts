@@ -49,17 +49,23 @@ export const fetchValidationImages = createAsyncThunk<
   { data: ValidationImage[]; page: number; limit: number },
   { page?: number; limit?: number },
   { rejectValue: string }
->("validation/fetch", async ({ page = 1, limit = 30 } = {}, { rejectWithValue }) => {
-  try {
-    const res = await axios.get(`${BASEURL}/anotations/validate`, {
-      params: { page, limit },
-    });
-    const data: ValidationImage[] = res.data?.data || res.data || [];
-    return { data, page, limit };
-  } catch (err: any) {
-    return rejectWithValue(err?.message || "Failed to fetch validation images");
+>(
+  "validation/fetch",
+  async ({ page = 1, limit = 30 } = {}, { rejectWithValue }) => {
+    try {
+      const res = await axios.get(`${BASEURL}/anotations/validate`, {
+        params: { page, limit },
+      });
+      const data: ValidationImage[] = res.data?.data || res.data || [];
+      console.log(data);
+      return { data, page, limit };
+    } catch (err) {
+      return rejectWithValue(
+        err?.message || "Failed to fetch validation images"
+      );
+    }
   }
-});
+);
 
 export const submitValidationForImage = createAsyncThunk<
   { _id?: string },
@@ -69,7 +75,7 @@ export const submitValidationForImage = createAsyncThunk<
   try {
     await axios.post(`${BASEURL}/anotations/validate`, image);
     return { _id: image._id };
-  } catch (err: any) {
+  } catch (err) {
     return rejectWithValue(err?.message || "Failed to submit validation");
   }
 });
@@ -137,7 +143,10 @@ const validationSlice = createSlice({
   },
 });
 
-export const { resetValidation, removeDetailFromImage, removeImageById } =
-  validationSlice.actions;
+export const {
+  resetValidation,
+  removeDetailFromImage,
+  removeImageById,
+} = validationSlice.actions;
 
 export default validationSlice.reducer;
