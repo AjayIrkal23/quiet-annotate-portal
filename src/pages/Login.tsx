@@ -1,7 +1,11 @@
+// Login.tsx
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useDispatch } from "react-redux";
-import { setUserRole } from "../store/userSlice";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  loginUser,
+  getUser as fetchUserProfile,
+} from "../store/thunks/userThunks";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -11,49 +15,57 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
-const Login: React.FC = () => {
-  const [username, setUsername] = useState("");
+import { AppDispatch, RootState } from "@/store/store";
+import RegisterDialog from "@/components/login/RegisterDialog";
+
+const Login = () => {
+  const [employeeId, setEmployeeId] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState<string>("");
+  const [error, setError] = useState("");
   const navigate = useNavigate();
   const location = useLocation();
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
+  const { profile, loading } = useSelector((state: RootState) => state.user);
 
-  // Check if user is already logged in
+  const [isRegisterOpen, setIsRegisterOpen] = useState(false);
+
+  // Fetch user profile if token exists in localStorage on mount
   useEffect(() => {
-    const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
-    if (isLoggedIn) {
-      const storedRole = localStorage.getItem("userRole");
-      if (storedRole) {
-        dispatch(setUserRole(storedRole));
-      }
+    const token = localStorage.getItem("token");
+    const storedEmployeeId = localStorage.getItem("employeeId");
+    if (token && storedEmployeeId) {
+      dispatch(fetchUserProfile(storedEmployeeId));
+    }
+  }, [dispatch]);
+
+  // Redirect if user profile is loaded and has jwtoken
+  useEffect(() => {
+    if (profile?.jwtoken) {
+      localStorage.setItem("isLoggedIn", "true");
+      localStorage.setItem("userRole", profile.role || "");
       const from = location.state?.from?.pathname || "/";
       navigate(from, { replace: true });
     }
-  }, [navigate, location, dispatch]);
+  }, [profile, navigate, location]);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Dummy login - accepts any username/password
-    if (username.trim() && password.trim() && role) {
-      localStorage.setItem("isLoggedIn", "true");
-      localStorage.setItem("username", username);
-      localStorage.setItem("userRole", role);
-
-      // Set role in Redux state
-      dispatch(setUserRole(role));
-
-      // Redirect to the page they were trying to access, or dashboard
-      const from = location.state?.from?.pathname || "/";
-      navigate(from, { replace: true });
+    setError("");
+    if (!employeeId.trim() || !password.trim()) {
+      setError("Please enter employee ID and password");
+      return;
+    }
+    try {
+      const resultAction = await dispatch(loginUser({ employeeId, password }));
+      if (loginUser.rejected.match(resultAction)) {
+        setError((resultAction.payload as string) || "Login failed");
+      } else if (loginUser.fulfilled.match(resultAction)) {
+        localStorage.setItem("token", resultAction.payload.token);
+        localStorage.setItem("employeeId", employeeId);
+      }
+    } catch (err) {
+      setError("An unexpected error occurred");
     }
   };
 
@@ -74,24 +86,24 @@ const Login: React.FC = () => {
             Welcome Back
           </CardTitle>
           <CardDescription className="text-center text-gray-400">
-            Enter credentials and select your role to continue
+            Enter your credentials to continue
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-2">
               <label
-                htmlFor="username"
+                htmlFor="employeeId"
                 className="text-sm font-medium text-gray-300"
               >
-                Username
+                Employee ID
               </label>
               <Input
-                id="username"
+                id="employeeId"
                 type="text"
-                placeholder="Enter username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                placeholder="Enter employee ID"
+                value={employeeId}
+                onChange={(e) => setEmployeeId(e.target.value)}
                 className="bg-gray-700/50 border-gray-600 text-white placeholder:text-gray-400"
                 required
               />
@@ -113,42 +125,34 @@ const Login: React.FC = () => {
                 required
               />
             </div>
-            <div className="space-y-2">
-              <label
-                htmlFor="role"
-                className="text-sm font-medium text-gray-300"
-              >
-                Role
-              </label>
-              <Select value={role} onValueChange={setRole} required>
-                <SelectTrigger className="bg-gray-700/50 border-gray-600 text-white">
-                  <SelectValue placeholder="Select your role" />
-                </SelectTrigger>
-                <SelectContent className="bg-gray-700 border-gray-600">
-                  <SelectItem
-                    value="admin"
-                    className="text-white hover:bg-gray-600"
-                  >
-                    Admin
-                  </SelectItem>
-                  <SelectItem
-                    value="user"
-                    className="text-white hover:bg-gray-600"
-                  >
-                    User
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            {error && (
+              <p className="text-red-500 text-sm text-center">{error}</p>
+            )}
             <Button
               type="submit"
+              disabled={loading}
               className="w-full bg-gradient-to-r from-emerald-500 to-pink-500 hover:from-emerald-600 hover:to-pink-600 text-white font-semibold"
             >
-              Sign In
+              {loading ? "Signing In..." : "Sign In"}
             </Button>
           </form>
+          <p className="text-center text-gray-400 mt-4">
+            Don't have an account?{" "}
+            <Button
+              variant="link"
+              className="text-emerald-400 p-0"
+              onClick={() => setIsRegisterOpen(true)}
+            >
+              Register Now
+            </Button>
+          </p>
         </CardContent>
       </Card>
+
+      <RegisterDialog
+        isOpen={isRegisterOpen}
+        onOpenChange={setIsRegisterOpen}
+      />
     </div>
   );
 };

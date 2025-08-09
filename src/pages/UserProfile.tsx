@@ -1,25 +1,35 @@
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../store/store";
-import { User, Trophy, CheckCircle, XCircle, Eye } from "lucide-react";
+import { User, Trophy, CheckCircle, XCircle, Eye, Clock } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
 import { fetchAllValidatedImages } from "@/store/thunks/fetchAllValidatedImages";
 import ImageCard from "@/components/ImageCardProfile";
 
 const UserProfile = () => {
-  const { profile, validatedImagesCorrect, validatedImagesWrong } = useSelector(
-    (state: RootState) => state.user
-  );
-
-  console.log(validatedImagesCorrect);
-
+  const {
+    profile,
+    validatedImagesCorrect,
+    validatedImagesWrong,
+    validatedImagesPending,
+  } = useSelector((state: RootState) => state.user);
   const dispatch = useDispatch();
 
   useEffect(() => {
-    // Replace with dynamic employee ID if available in auth/profile
-    dispatch<any>(fetchAllValidatedImages({ employeeId: "AjayIrkal" }));
-  }, [dispatch]);
+    if (profile?.employeeId) {
+      dispatch<any>(
+        fetchAllValidatedImages({ employeeId: profile.employeeId })
+      );
+    }
+  }, [dispatch, profile?.employeeId]);
+
+  if (!profile) {
+    return (
+      <div className="min-h-screen bg-gray-900 text-white p-6">
+        Loading profile...
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-6">
@@ -48,10 +58,16 @@ const UserProfile = () => {
             <div>
               <h3 className="text-white font-bold text-lg">{profile.name}</h3>
               <p className="text-gray-400 text-sm">ID: {profile.employeeId}</p>
+              <p className="text-gray-400 text-sm">Email: {profile.email}</p>
+              <p className="text-gray-400 text-sm">
+                Department: {profile.department}
+              </p>
+              <p className="text-gray-400 text-sm">
+                Role: {profile.role || "N/A"}
+              </p>
             </div>
           </div>
         </div>
-
         <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/50">
           <div className="flex items-center justify-between mb-2">
             <span className="text-gray-400">Images Validated</span>
@@ -61,7 +77,6 @@ const UserProfile = () => {
             {profile.imagesValidated}
           </p>
         </div>
-
         <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/50">
           <div className="flex items-center justify-between mb-2">
             <span className="text-gray-400">Validated Correct</span>
@@ -71,7 +86,6 @@ const UserProfile = () => {
             {profile.validatedCorrect}
           </p>
         </div>
-
         <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/50">
           <div className="flex items-center justify-between mb-2">
             <span className="text-gray-400">Validated Wrong</span>
@@ -83,28 +97,10 @@ const UserProfile = () => {
         </div>
       </div>
 
-      {/* Leaderboard Position */}
-      <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/50 mb-8">
-        <div className="flex items-center space-x-4">
-          <div className="w-16 h-16 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center">
-            <Trophy className="w-8 h-8 text-white" />
-          </div>
-          <div>
-            <h3 className="text-xl font-bold text-white">
-              Leaderboard Position
-            </h3>
-            <p className="text-3xl font-bold text-yellow-400">
-              #{profile.leaderboardPosition}
-            </p>
-            <p className="text-gray-400 text-sm">Out of all validators</p>
-          </div>
-        </div>
-      </div>
-
       {/* Validated Images Tabs */}
       <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl border border-gray-700/50 p-6">
         <Tabs defaultValue="correct" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 bg-gray-700">
+          <TabsList className="grid w-full grid-cols-3 bg-gray-700">
             <TabsTrigger
               value="correct"
               className="data-[state=active]:bg-green-600"
@@ -117,20 +113,31 @@ const UserProfile = () => {
             >
               Validated Wrong ({validatedImagesWrong.length})
             </TabsTrigger>
+            <TabsTrigger
+              value="pending"
+              className="data-[state=active]:bg-yellow-600"
+            >
+              Pending Validation ({validatedImagesPending.length})
+            </TabsTrigger>
           </TabsList>
-
           <TabsContent value="correct" className="mt-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {validatedImagesCorrect.map((image, index) => (
-                <ImageCard key={index} image={image} isCorrect={true} />
+              {validatedImagesCorrect.map((image) => (
+                <ImageCard key={image._id} image={image} isCorrect={true} />
               ))}
             </div>
           </TabsContent>
-
           <TabsContent value="wrong" className="mt-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {validatedImagesWrong.map((image, index) => (
-                <ImageCard key={index} image={image} isCorrect={false} />
+              {validatedImagesWrong.map((image) => (
+                <ImageCard key={image._id} image={image} isCorrect={false} />
+              ))}
+            </div>
+          </TabsContent>
+          <TabsContent value="pending" className="mt-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {validatedImagesPending.map((image) => (
+                <ImageCard key={image._id} image={image} isCorrect={null} />
               ))}
             </div>
           </TabsContent>

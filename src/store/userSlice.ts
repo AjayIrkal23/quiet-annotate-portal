@@ -1,4 +1,13 @@
+// userSlice.ts (updated)
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import {
+  registerUser,
+  verifyUser,
+  loginUser,
+  logoutUser,
+  getUser,
+  updateUser,
+} from "./thunks/userThunks";
 
 export interface ValidatedImage {
   _id: string;
@@ -12,34 +21,35 @@ export interface ValidatedImage {
   }[];
 }
 
-interface UserState {
+export interface UserState {
   profile: {
     name: string;
     employeeId: string;
+    email: string;
     role: string | null;
     imagesValidated: number;
     validatedCorrect: number;
     validatedWrong: number;
-    leaderboardPosition: number;
-  };
+    department: string;
+    isAdmin: boolean;
+    isActive: boolean;
+    verificationCode: string;
+    jwtoken: string;
+  } | null;
   validatedImagesCorrect: ValidatedImage[];
   validatedImagesWrong: ValidatedImage[];
-  validatedImagesPending: ValidatedImage[]; // ✅ New field
+  validatedImagesPending: ValidatedImage[];
+  loading: boolean; // Added for async state management
+  error: string | null; // Added for error handling
 }
 
 const initialState: UserState = {
-  profile: {
-    name: "Ajay Irkal",
-    employeeId: "AjayIrkal",
-    role: "admin",
-    imagesValidated: 45,
-    validatedCorrect: 38,
-    validatedWrong: 7,
-    leaderboardPosition: 1,
-  },
+  profile: null,
   validatedImagesCorrect: [],
   validatedImagesWrong: [],
-  validatedImagesPending: [], // ✅ Init pending
+  validatedImagesPending: [],
+  loading: false,
+  error: null,
 };
 
 const userSlice = createSlice({
@@ -48,12 +58,18 @@ const userSlice = createSlice({
   reducers: {
     updateProfile: (
       state,
-      action: PayloadAction<Partial<typeof state.profile>>
+      action: PayloadAction<Partial<NonNullable<UserState["profile"]>>>
     ) => {
-      state.profile = { ...state.profile, ...action.payload };
+      if (state.profile) {
+        state.profile = { ...state.profile, ...action.payload };
+      } else {
+        state.profile = { ...initialState.profile!, ...action.payload }; // Assuming initial is object, but since null, perhaps set new
+      }
     },
     setUserRole: (state, action: PayloadAction<string>) => {
-      state.profile.role = action.payload;
+      if (state.profile) {
+        state.profile.role = action.payload;
+      }
     },
     addValidatedImage: (
       state,
@@ -61,12 +77,12 @@ const userSlice = createSlice({
     ) => {
       if (action.payload.isCorrect) {
         state.validatedImagesCorrect.push(action.payload.image);
-        state.profile.validatedCorrect += 1;
+        if (state.profile) state.profile.validatedCorrect += 1;
       } else {
         state.validatedImagesWrong.push(action.payload.image);
-        state.profile.validatedWrong += 1;
+        if (state.profile) state.profile.validatedWrong += 1;
       }
-      state.profile.imagesValidated += 1;
+      if (state.profile) state.profile.imagesValidated += 1;
     },
     setPendingValidatedImages: (
       state,
@@ -93,16 +109,106 @@ const userSlice = createSlice({
         validatedWrong: number;
       }>
     ) => {
-      state.profile.validatedCorrect = action.payload.validatedCorrect;
-      state.profile.validatedWrong = action.payload.validatedWrong;
-      state.profile.imagesValidated =
-        action.payload.validatedCorrect + action.payload.validatedWrong;
+      if (state.profile) {
+        state.profile.validatedCorrect = action.payload.validatedCorrect;
+        state.profile.validatedWrong = action.payload.validatedWrong;
+        state.profile.imagesValidated =
+          action.payload.validatedCorrect + action.payload.validatedWrong;
+      }
     },
     removePendingImage: (state, action: PayloadAction<string>) => {
       state.validatedImagesPending = state.validatedImagesPending.filter(
         (img) => img.imageName !== action.payload
       );
     },
+  },
+  extraReducers: (builder) => {
+    builder
+      // Register
+      .addCase(registerUser.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(registerUser.fulfilled, (state) => {
+        state.loading = false;
+      })
+      .addCase(registerUser.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+      // Verify
+      .addCase(verifyUser.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(verifyUser.fulfilled, (state) => {
+        state.loading = false;
+        // Do not set profile fields since profile may be null
+        // The server handles activation, and login will fetch updated profile
+      })
+      .addCase(verifyUser.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+      // Login
+      .addCase(loginUser.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(loginUser.fulfilled, (state, action) => {
+        state.loading = false;
+        state.profile = {
+          ...(state.profile || {}),
+          ...action.payload.user,
+          jwtoken: action.payload.token,
+        };
+      })
+      .addCase(loginUser.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+      // Logout
+      .addCase(logoutUser.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(logoutUser.fulfilled, (state) => {
+        state.loading = false;
+        if (state.profile) {
+          state.profile.jwtoken = "";
+          state.profile = null;
+        }
+      })
+      .addCase(logoutUser.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+      // Get User
+      .addCase(getUser.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(getUser.fulfilled, (state, action) => {
+        state.loading = false;
+        state.profile = { ...(state.profile || {}), ...action.payload };
+      })
+      .addCase(getUser.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+      // Update User
+      .addCase(updateUser.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(updateUser.fulfilled, (state, action) => {
+        state.loading = false;
+        state.profile = { ...(state.profile || {}), ...action.payload };
+      })
+      .addCase(updateUser.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      });
   },
 });
 
@@ -111,9 +217,9 @@ export const {
   addValidatedImage,
   setUserRole,
   setPendingValidatedImages,
-  setCorrectValidatedImages, // ✅ now exported
-  setWrongValidatedImages, // ✅ now exported
-  setValidationStats, // ✅ include here
+  setCorrectValidatedImages,
+  setWrongValidatedImages,
+  setValidationStats,
   removePendingImage,
 } = userSlice.actions;
 
