@@ -7,7 +7,11 @@ import {
 } from "../store/annotationSlice";
 import { nextImage, previousImage } from "../store/imageSlice";
 import { v4 as uuidv4 } from "uuid";
-import { BoundingBox, CurrentBox, ViolationDetail } from "@/types/annotationTypes";
+import {
+  BoundingBox,
+  CurrentBox,
+  ViolationDetail,
+} from "@/types/annotationTypes";
 import axios from "axios";
 import { BASEURL } from "@/lib/utils";
 import { fetchUniqueImages } from "./../store/thunks/fetchUniqueImages";
@@ -43,7 +47,9 @@ export function useAnnotationManager() {
   const boundingBoxes: BoundingBox[] = allAnnotations[imageId] || [];
 
   // New: custom violations per image (session-only)
-  const [customViolations, setCustomViolations] = useState<Record<string, ViolationDetail[]>>({});
+  const [customViolations, setCustomViolations] = useState<
+    Record<string, ViolationDetail[]>
+  >({});
 
   // Calculate total annotated images
   const totalAnnotatedImages = Object.keys(allAnnotations).filter(
@@ -212,13 +218,18 @@ export function useAnnotationManager() {
     ];
     if (
       existing.some(
-        (v) => v.name.trim().toLowerCase() === violation.name.trim().toLowerCase()
+        (v) =>
+          v.name.trim().toLowerCase() === violation.name.trim().toLowerCase()
       )
     ) {
       toast.error("Violation already exists for this image.", {
         duration: 3000,
         position: "top-right",
-        style: { background: "#1f2937", color: "#fff", border: "1px solid #374151" },
+        style: {
+          background: "#1f2937",
+          color: "#fff",
+          border: "1px solid #374151",
+        },
       });
       return;
     }
@@ -237,7 +248,8 @@ export function useAnnotationManager() {
 
         const extendedForImage: ViolationDetail[] = [
           ...(image.violationDetails || []),
-          ...((customViolations[imageId] as ViolationDetail[] | undefined) || []),
+          ...((customViolations[imageId] as ViolationDetail[] | undefined) ||
+            []),
         ];
 
         return {
@@ -248,7 +260,7 @@ export function useAnnotationManager() {
             width: imageWidth,
             height: imageHeight,
           },
-          details: annotations.map((box) => {
+          details: annotations.map((box: any) => {
             const violation = extendedForImage.find(
               (v) => v.name === box.violationName
             );
@@ -261,6 +273,11 @@ export function useAnnotationManager() {
                 width: box.width,
                 height: box.height,
               },
+              ...(box.isHumanAdded !== undefined
+                ? { isHumanAdded: box.isHumanAdded }
+                : violation?.isHumanAdded !== undefined
+                ? { isHumanAdded: violation.isHumanAdded }
+                : {}),
             };
           }),
         };
