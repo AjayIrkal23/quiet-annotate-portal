@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { fetchUniqueImages } from "./thunks/fetchUniqueImages"; // import this
+import { fetchUniqueImages } from "./thunks/fetchUniqueImages";
 import { uploadZipThunk } from "./thunks/uploadZipThunk";
 
 export interface ViolationDetail {
@@ -13,6 +13,7 @@ export interface ImageData {
   imagePath: string;
   imageName: string;
   violationDetails: ViolationDetail[] | null;
+  isIssueGenerated: boolean;
 }
 
 interface ImageState {
@@ -25,7 +26,6 @@ interface ImageState {
 // ===================
 // Slice
 // ===================
-
 const initialState: ImageState = {
   images: [],
   currentImageIndex: 0,

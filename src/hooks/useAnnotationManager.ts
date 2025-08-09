@@ -11,31 +11,33 @@ import { BoundingBox, CurrentBox } from "@/types/annotationTypes";
 import axios from "axios";
 import { BASEURL } from "@/lib/utils";
 import { fetchUniqueImages } from "./../store/thunks/fetchUniqueImages";
+import { toast } from "sonner";
 
 export function useAnnotationManager() {
   const dispatch = useDispatch();
-
   const { images, currentImageIndex } = useSelector(
     (state: RootState) => state.image
   );
+  const { profile } = useSelector((state: RootState) => state.user);
   const allAnnotations = useSelector(
     (state: RootState) => state.annotation.annotations
   );
 
+  const employeeId = profile?.employeeId || "";
+
   useEffect(() => {
-    dispatch<any>(fetchUniqueImages("AjayIrkal")); // Replace with dynamic employeeId if needed
-  }, []);
+    if (employeeId) {
+      dispatch<any>(fetchUniqueImages(employeeId));
+    }
+  }, [dispatch, employeeId]);
 
   const [imageWidth] = useState(800);
   const [imageHeight] = useState(600);
-
   const [currentBox, setCurrentBox] = useState<CurrentBox | null>(null);
   const [pendingBox, setPendingBox] = useState<BoundingBox | null>(null);
   const [violationDialogOpen, setViolationDialogOpen] = useState(false);
-
   const imageRef = useRef<HTMLImageElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-
   const currentImageData = images[currentImageIndex];
   const imageId = currentImageData?._id || "";
   const boundingBoxes: BoundingBox[] = allAnnotations[imageId] || [];
@@ -72,7 +74,6 @@ export function useAnnotationManager() {
   const startDrawing = (x: number, y: number) => {
     // Don't allow drawing if all violations are annotated
     if (allViolationsAnnotated) return;
-
     setCurrentBox({
       id: uuidv4(),
       x,
@@ -106,7 +107,6 @@ export function useAnnotationManager() {
       setCurrentBox(null);
       return;
     }
-
     const newPendingBox: BoundingBox = {
       id: currentBox.id || uuidv4(),
       x: currentBox.x,
@@ -115,7 +115,6 @@ export function useAnnotationManager() {
       height: currentBox.height,
       violationName: "",
     };
-
     setPendingBox(newPendingBox);
     setCurrentBox(null);
     setViolationDialogOpen(true);
@@ -130,7 +129,7 @@ export function useAnnotationManager() {
   };
 
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!canvasRef.current || allViolationsAnnotated) return;
+    if (!canvasRef.current || allViolationsAnnotated || !currentBox) return;
     const rect = canvasRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
@@ -139,6 +138,32 @@ export function useAnnotationManager() {
 
   const handleMouseUp = () => {
     if (allViolationsAnnotated) return;
+    finishDrawing();
+  };
+
+  const handleTouchStart = (e: React.TouchEvent<HTMLCanvasElement>) => {
+    if (!canvasRef.current || allViolationsAnnotated) return;
+    e.preventDefault(); // Prevent default touch behaviors like scrolling
+    const rect = canvasRef.current.getBoundingClientRect();
+    const touch = e.touches[0];
+    const x = touch.clientX - rect.left;
+    const y = touch.clientY - rect.top;
+    startDrawing(x, y);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent<HTMLCanvasElement>) => {
+    if (!canvasRef.current || allViolationsAnnotated || !currentBox) return;
+    e.preventDefault(); // Prevent default touch behaviors
+    const rect = canvasRef.current.getBoundingClientRect();
+    const touch = e.touches[0];
+    const x = touch.clientX - rect.left;
+    const y = touch.clientY - rect.top;
+    updateDrawing(x, y);
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent<HTMLCanvasElement>) => {
+    if (allViolationsAnnotated) return;
+    e.preventDefault(); // Prevent default touch behaviors
     finishDrawing();
   };
 
@@ -167,7 +192,6 @@ export function useAnnotationManager() {
     };
     const updatedBoxes = [...currentBoxes, boxWithViolation];
     dispatch(saveAnnotationForImage({ imageId, boxes: updatedBoxes }));
-
     setPendingBox(null);
     setViolationDialogOpen(false);
   };
@@ -177,13 +201,11 @@ export function useAnnotationManager() {
       .map((image) => {
         const imageId = image._id;
         const annotations = allAnnotations[imageId] || [];
-
         if (annotations.length === 0) return null;
-
         return {
-          employeeId: "AjayIrkal",
+          employeeId,
           imageName: image.imageName,
-          imagePath: image.imagePath, // ✅ Add imagePath here
+          imagePath: image.imagePath,
           imageSize: {
             width: imageWidth,
             height: imageHeight,
@@ -208,7 +230,15 @@ export function useAnnotationManager() {
       .filter(Boolean); // Remove null entries
 
     if (allImageData.length === 0) {
-      alert("⚠️ No annotations to submit.");
+      toast.error("⚠️ No annotations to submit.", {
+        duration: 4000,
+        position: "top-right",
+        style: {
+          background: "#1f2937",
+          color: "#fff",
+          border: "1px solid #374151",
+        },
+      });
       return;
     }
 
@@ -217,16 +247,33 @@ export function useAnnotationManager() {
         `${BASEURL}/anotatedImages/bulk`,
         allImageData
       );
-
       console.log("✅ API Response:", response.data);
-      alert(
-        `✅ ${response.data.created} images saved, ${response.data.skipped} skipped.`
+      toast.success(
+        `✅ ${response.data.created} images saved, ${response.data.skipped} skipped.`,
+        {
+          duration: 4000,
+          position: "top-right",
+          style: {
+            background: "#1f2937",
+            color: "#fff",
+            border: "1px solid #374151",
+          },
+        }
       );
-
-      dispatch<any>(fetchUniqueImages("AjayIrkal")); // Replace with dynamic employeeId if needed
+      if (employeeId) {
+        dispatch<any>(fetchUniqueImages(employeeId));
+      }
     } catch (error) {
       console.error("❌ API error:", error);
-      alert("❌ Failed to submit annotations. See console for details.");
+      toast.error("❌ Failed to submit annotations. See console for details.", {
+        duration: 4000,
+        position: "top-right",
+        style: {
+          background: "#1f2937",
+          color: "#fff",
+          border: "1px solid #374151",
+        },
+      });
     }
 
     // Clear all annotations after submission
@@ -253,6 +300,7 @@ export function useAnnotationManager() {
         return "#6b7280";
     }
   };
+
   return {
     IMAGE_WIDTH: imageWidth,
     IMAGE_HEIGHT: imageHeight,
@@ -272,6 +320,9 @@ export function useAnnotationManager() {
     handleMouseDown,
     handleMouseMove,
     handleMouseUp,
+    handleTouchStart,
+    handleTouchMove,
+    handleTouchEnd,
     handleNextImage,
     handlePreviousImage,
     handleDeleteBoundingBox,

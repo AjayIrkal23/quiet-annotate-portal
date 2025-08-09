@@ -1,71 +1,116 @@
+import React, { useEffect } from "react";
+import { useSelector, useDispatch } from "react-redux";
+import { RootState } from "../store/store";
+import { fetchSummaryMetrics } from "../store/dashboardSlice";
+import StatusCard from "../components/StatusCard";
+import AnalyticsChart from "../components/AnalyticsChart";
+import MonthlyAnalytics from "../components/MonthlyAnalytics";
+import CurrentMonthAnalytics from "../components/CurrentMonthAnalytics";
+import { Image, AlertCircle, Users, CheckCircle, XCircle } from "lucide-react";
 
-import React from 'react';
-import { useSelector } from 'react-redux';
-import { RootState } from '../store/store';
-import StatusCard from '../components/StatusCard';
-import AnalyticsChart from '../components/AnalyticsChart';
-import MonthlyAnalytics from '../components/MonthlyAnalytics';
-import { TrendingUp, Users, CheckCircle, Clock } from 'lucide-react';
-
-const Dashboard = () => {
+const Dashboard: React.FC = () => {
+  const dispatch = useDispatch();
   const {
-    totalAccImages,
-    totalImagesOptioned,
-    totalImagesWaiting
+    imagesUploaded,
+    violationsFound,
+    usersAnnotated,
+    totalValid,
+    totalInvalid,
+    summaryLoading,
+    summaryError,
   } = useSelector((state: RootState) => state.dashboard);
 
+  useEffect(() => {
+    dispatch(fetchSummaryMetrics() as any);
+  }, [dispatch]);
+
+  if (summaryLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-0 flex items-center justify-center">
+        <div className="animate-pulse text-white text-lg flex items-center space-x-2">
+          <div className="w-6 h-6 bg-blue-500 rounded-full animate-bounce"></div>
+          <p>Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (summaryError) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-6 flex items-center justify-center">
+        <div className="text-red-400 text-lg flex items-center space-x-2">
+          <AlertCircle className="w-6 h-6" />
+          <p>Error: {summaryError}</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-4">
       {/* Header Section */}
-      <div className="mb-8 animate-fade-in">
+      <div className="mb-4  p-4 animate-fade-in">
         <div className="flex items-center space-x-3 mb-2">
-          <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-            <TrendingUp className="w-5 h-5 text-white" />
+          <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+            <Image className="w-6 h-6 text-white" />
           </div>
-          <h1 className="font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent text-2xl">
+          <h1 className="font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent text-3xl">
             Analytics Dashboard
           </h1>
         </div>
-        <p className="text-gray-400 font-medium text-sm">
-          Real-time insights and performance metrics for your annotation workflow
+        <p className="text-gray-400 font-medium text-sm max-w-md">
+          Real-time insights and performance metrics for your annotation
+          workflow
         </p>
       </div>
 
       {/* Status Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <StatusCard title="Total ACC Images" value={totalAccImages} icon={CheckCircle} delay={0} trend="+12%" trendUp={true} />
-        <StatusCard title="Images Optioned" value={totalImagesOptioned} icon={Users} delay={100} trend="+8%" trendUp={true} />
-        <StatusCard title="Pending Images" value={totalImagesWaiting} icon={Clock} delay={200} trend="-5%" trendUp={false} />
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 mb-8">
+        <StatusCard
+          title="Images Uploaded"
+          value={imagesUploaded}
+          icon={Image}
+          delay={0}
+          trendUp={true}
+        />
+        <StatusCard
+          title="Violations Found"
+          value={violationsFound}
+          icon={AlertCircle}
+          delay={100}
+          trendUp={true}
+        />
+        <StatusCard
+          title="Users Annotated"
+          value={usersAnnotated}
+          icon={Users}
+          delay={200}
+          trendUp={true}
+        />
+        <StatusCard
+          title="Total Valid"
+          value={totalValid}
+          icon={CheckCircle}
+          delay={300}
+          trendUp={true}
+        />
+        <StatusCard
+          title="Total Invalid"
+          value={totalInvalid}
+          icon={XCircle}
+          delay={400}
+          trendUp={false}
+        />
+      </div>
+
+      <div className="grid grid-cols-1   mb-8">
+        <CurrentMonthAnalytics />
       </div>
 
       {/* Analytics Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         <AnalyticsChart />
         <MonthlyAnalytics />
-      </div>
-
-      {/* Performance Metrics */}
-      <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/50 shadow-2xl animate-fade-in" style={{
-        animationDelay: '600ms'
-      }}>
-        <h2 className="text-2xl font-bold text-white mb-6 flex items-center space-x-3">
-          <div className="w-6 h-6 bg-gradient-to-r from-green-500 to-blue-500 rounded-md"></div>
-          <span>Performance Overview</span>
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="text-center">
-            <div className="text-3xl font-bold text-green-400 mb-2">98.5%</div>
-            <div className="text-gray-400 font-medium">Accuracy Rate</div>
-          </div>
-          <div className="text-center">
-            <div className="text-3xl font-bold text-blue-400 mb-2">2.3s</div>
-            <div className="text-gray-400 font-medium">Avg Process Time</div>
-          </div>
-          <div className="text-center">
-            <div className="text-3xl font-bold text-purple-400 mb-2">1,247</div>
-            <div className="text-gray-400 font-medium">Daily Throughput</div>
-          </div>
-        </div>
       </div>
     </div>
   );

@@ -14,6 +14,7 @@ export interface UploadedImage {
         severity: "high" | "medium" | "low";
       }[]
     | null;
+  isIssueGenerated: boolean;
 }
 
 interface UploadState {

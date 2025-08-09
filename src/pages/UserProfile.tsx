@@ -1,7 +1,15 @@
-import { useEffect } from "react";
+import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../store/store";
-import { User, Trophy, CheckCircle, XCircle, Eye, Clock } from "lucide-react";
+import {
+  User,
+  Trophy,
+  CheckCircle,
+  XCircle,
+  Eye,
+  Clock,
+  Loader2,
+} from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { fetchAllValidatedImages } from "@/store/thunks/fetchAllValidatedImages";
 import ImageCard from "@/components/ImageCardProfile";
@@ -12,6 +20,7 @@ const UserProfile = () => {
     validatedImagesCorrect,
     validatedImagesWrong,
     validatedImagesPending,
+    loading,
   } = useSelector((state: RootState) => state.user);
   const dispatch = useDispatch();
 
@@ -23,10 +32,21 @@ const UserProfile = () => {
     }
   }, [dispatch, profile?.employeeId]);
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center p-6">
+        <div className="flex flex-col items-center space-y-4">
+          <Loader2 className="w-8 h-8 animate-spin text-white" />
+          <p className="text-gray-400 text-lg">Loading profile...</p>
+        </div>
+      </div>
+    );
+  }
+
   if (!profile) {
     return (
       <div className="min-h-screen bg-gray-900 text-white p-6">
-        Loading profile...
+        Profile not found
       </div>
     );
   }
@@ -47,7 +67,6 @@ const UserProfile = () => {
           Your validation performance and statistics
         </p>
       </div>
-
       {/* Profile Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/50">
@@ -74,7 +93,7 @@ const UserProfile = () => {
             <Eye className="w-5 h-5 text-blue-400" />
           </div>
           <p className="text-2xl font-bold text-white">
-            {profile.imagesValidated}
+            {profile.imagesValidated || 0}
           </p>
         </div>
         <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/50">
@@ -83,7 +102,7 @@ const UserProfile = () => {
             <CheckCircle className="w-5 h-5 text-green-400" />
           </div>
           <p className="text-2xl font-bold text-green-400">
-            {profile.validatedCorrect}
+            {profile.validatedCorrect || 0}
           </p>
         </div>
         <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/50">
@@ -92,11 +111,10 @@ const UserProfile = () => {
             <XCircle className="w-5 h-5 text-red-400" />
           </div>
           <p className="text-2xl font-bold text-red-400">
-            {profile.validatedWrong}
+            {profile.validatedWrong || 0}
           </p>
         </div>
       </div>
-
       {/* Validated Images Tabs */}
       <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl border border-gray-700/50 p-6">
         <Tabs defaultValue="correct" className="w-full">

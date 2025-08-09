@@ -1,9 +1,10 @@
 import React, { useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
 import { Home, Upload, Image, Trophy, User, LogOut } from "lucide-react";
 import { createPortal } from "react-dom";
-import { useSelector } from "react-redux";
-import { RootState } from "../../store/store";
+import { AppDispatch, RootState } from "../../store/store";
+import { logoutUser } from "@/store/thunks/userThunks";
 
 // Floating sidebar tooltip as a portal to <body>
 const SidebarTooltip: React.FC<{
@@ -12,7 +13,6 @@ const SidebarTooltip: React.FC<{
   show: boolean;
 }> = ({ targetRect, children, show }) => {
   if (!show || !targetRect) return null;
-
   // Tooltip appears right beside the sidebar icon (to the right, vertically centered)
   const style: React.CSSProperties = {
     position: "fixed",
@@ -22,7 +22,6 @@ const SidebarTooltip: React.FC<{
     zIndex: 9999,
     pointerEvents: "none",
   };
-
   return createPortal(
     <div
       className="px-2 py-1 bg-gray-800 text-white text-sm rounded shadow-xl min-w-max opacity-100 animate-fade-in"
@@ -55,12 +54,15 @@ const allNavItems = [
 const Navigation = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [tooltip, setTooltip] = useState<{
     rect: DOMRect | null;
     label: string | null;
   }>({ rect: null, label: null });
-
-  const userRole = useSelector((state: RootState) => state.user.profile.role);
+  const userRole = useSelector((state: RootState) => state.user.profile?.role);
+  const empyid = useSelector(
+    (state: RootState) => state.user.profile?.employeeId
+  );
   const fallbackRole = localStorage.getItem("userRole") || "user";
   const effectiveRole = userRole || fallbackRole;
 
@@ -69,11 +71,15 @@ const Navigation = () => {
     item.roles.includes(effectiveRole)
   );
 
-  const handleLogout = () => {
-    localStorage.removeItem("isLoggedIn");
-    localStorage.removeItem("username");
-    localStorage.removeItem("userRole");
-    navigate("/login");
+  const handleLogout = async () => {
+    try {
+      await dispatch<any>(logoutUser(empyid)).unwrap();
+      navigate("/login");
+    } catch (error) {
+      console.error("Logout failed:", error);
+      // Optionally handle error (e.g., show toast notification)
+      navigate("/login");
+    }
   };
 
   return (
@@ -82,18 +88,16 @@ const Navigation = () => {
       <div className="flex flex-col items-center">
         <div className="mb-6 mt-2">
           <img
-            src="/lovable-uploads/a3da82cf-d79a-4c6d-ba7f-5a33302171b2.png"
+            src="/logo.png"
             alt="ROKO TOKO Logo"
             className="w-10 h-10 rounded-full"
           />
         </div>
-
         {/* Navigation Items */}
         <div className="space-y-3">
           {navItems.map(({ path, icon: Icon, label }) => {
             const ref = useRef<HTMLAnchorElement>(null);
             const isActive = location.pathname === path;
-
             return (
               <div
                 key={path}
@@ -135,7 +139,6 @@ const Navigation = () => {
           })}
         </div>
       </div>
-
       {/* Logout Button */}
       <div className="mb-6">
         <div

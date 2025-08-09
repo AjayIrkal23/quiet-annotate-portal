@@ -19,6 +19,7 @@ interface ImageData {
   imagePath: string;
   imageName: string;
   violationDetails: Violation[] | null;
+  isIssueGenerated: boolean;
 }
 
 interface ImageModalProps {
@@ -56,7 +57,6 @@ const ImageModal: React.FC<ImageModalProps> = ({ open, onClose, image }) => {
             <span>Safety Issues Detected</span>
           </DialogTitle>
         </DialogHeader>
-
         <div className="space-y-4">
           {/* Image with loader */}
           <div className="relative">
@@ -65,23 +65,28 @@ const ImageModal: React.FC<ImageModalProps> = ({ open, onClose, image }) => {
                 <Loader2 className="w-6 h-6 animate-spin text-white" />
               </div>
             )}
-
-            <img
-              src={`${BASEURL}/${image.imagePath}`}
-              alt={image.imageName}
-              onLoad={() => setLoaded(true)}
-              className={`w-full max-h-[450px] object-contain rounded-lg transition-opacity duration-300 ${
-                loaded ? "opacity-100" : "opacity-0"
+            <div
+              className={`border-2 rounded-lg ${
+                image.isIssueGenerated
+                  ? "border-green-500"
+                  : "border-orange-500"
               }`}
-            />
+            >
+              <img
+                src={`${BASEURL}/${image.imagePath}`}
+                alt={image.imageName}
+                onLoad={() => setLoaded(true)}
+                className={`w-full max-h-[450px] object-contain rounded-lg transition-opacity duration-300 ${
+                  loaded ? "opacity-100" : "opacity-0"
+                }`}
+              />
+            </div>
           </div>
-
           {/* Violations */}
           <div className="space-y-3">
             <h3 className="text-lg font-semibold text-white">
               Detected Issues ({image.violationDetails?.length || 0})
             </h3>
-
             {image.violationDetails?.length ? (
               image.violationDetails.map((violation, index) => (
                 <div
@@ -115,8 +120,9 @@ const ImageModal: React.FC<ImageModalProps> = ({ open, onClose, image }) => {
               ))
             ) : (
               <p className="text-gray-400">
-                image processing. please wait for AI AGENT to process and
-                provide results{" "}
+                {image.isIssueGenerated
+                  ? "No Issues Found"
+                  : "AI AGENT IS DETECTING ISSUES"}
               </p>
             )}
           </div>

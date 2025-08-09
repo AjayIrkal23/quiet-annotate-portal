@@ -1,4 +1,3 @@
-// Login.tsx
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
@@ -6,6 +5,7 @@ import {
   loginUser,
   getUser as fetchUserProfile,
 } from "../store/thunks/userThunks";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -15,9 +15,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-
 import { AppDispatch, RootState } from "@/store/store";
 import RegisterDialog from "@/components/login/RegisterDialog";
+import { updateProfile } from "@/store/userSlice";
 
 const Login = () => {
   const [employeeId, setEmployeeId] = useState("");
@@ -27,15 +27,24 @@ const Login = () => {
   const location = useLocation();
   const dispatch = useDispatch<AppDispatch>();
   const { profile, loading } = useSelector((state: RootState) => state.user);
-
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
 
-  // Fetch user profile if token exists in localStorage on mount
+  // Check localStorage for persistent user data on mount
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    const storedEmployeeId = localStorage.getItem("employeeId");
-    if (token && storedEmployeeId) {
-      dispatch(fetchUserProfile(storedEmployeeId));
+    const isLoggedIn = localStorage.getItem("isLoggedIn");
+    const userProfile = localStorage.getItem("userProfile");
+    if (isLoggedIn === "true" && userProfile) {
+      try {
+        const parsedProfile = JSON.parse(userProfile);
+        // Dispatch action to restore user profile in Redux store
+        dispatch(updateProfile(parsedProfile));
+        // Optionally fetch fresh user data
+        dispatch(fetchUserProfile(parsedProfile.employeeId));
+      } catch (err) {
+        console.error("Failed to parse userProfile from localStorage:", err);
+        localStorage.removeItem("isLoggedIn");
+        localStorage.removeItem("userProfile");
+      }
     }
   }, [dispatch]);
 
@@ -43,7 +52,7 @@ const Login = () => {
   useEffect(() => {
     if (profile?.jwtoken) {
       localStorage.setItem("isLoggedIn", "true");
-      localStorage.setItem("userRole", profile.role || "");
+      localStorage.setItem("userRole", profile.role || "user");
       const from = location.state?.from?.pathname || "/";
       navigate(from, { replace: true });
     }
@@ -61,8 +70,8 @@ const Login = () => {
       if (loginUser.rejected.match(resultAction)) {
         setError((resultAction.payload as string) || "Login failed");
       } else if (loginUser.fulfilled.match(resultAction)) {
-        localStorage.setItem("token", resultAction.payload.token);
-        localStorage.setItem("employeeId", employeeId);
+        // No need to set token or employeeId in localStorage here,
+        // as userSlice already handles storing userProfile and isLoggedIn
       }
     } catch (err) {
       setError("An unexpected error occurred");
@@ -76,7 +85,7 @@ const Login = () => {
           <div className="flex items-center justify-center mb-4">
             <div className="">
               <img
-                src="/lovable-uploads/a3da82cf-d79a-4c6d-ba7f-5a33302171b2.png"
+                src="/logo.png"
                 alt="ROKO TOKO Logo"
                 className="w-14 h-14 rounded-full"
               />
@@ -148,7 +157,6 @@ const Login = () => {
           </p>
         </CardContent>
       </Card>
-
       <RegisterDialog
         isOpen={isRegisterOpen}
         onOpenChange={setIsRegisterOpen}

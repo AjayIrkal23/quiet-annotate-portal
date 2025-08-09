@@ -1,4 +1,3 @@
-// userSlice.ts (updated)
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import {
   registerUser,
@@ -39,8 +38,8 @@ export interface UserState {
   validatedImagesCorrect: ValidatedImage[];
   validatedImagesWrong: ValidatedImage[];
   validatedImagesPending: ValidatedImage[];
-  loading: boolean; // Added for async state management
-  error: string | null; // Added for error handling
+  loading: boolean;
+  error: string | null;
 }
 
 const initialState: UserState = {
@@ -62,13 +61,18 @@ const userSlice = createSlice({
     ) => {
       if (state.profile) {
         state.profile = { ...state.profile, ...action.payload };
+        // Update localStorage with new profile data
+        localStorage.setItem("userProfile", JSON.stringify(state.profile));
       } else {
-        state.profile = { ...initialState.profile!, ...action.payload }; // Assuming initial is object, but since null, perhaps set new
+        state.profile = { ...initialState.profile!, ...action.payload };
+        localStorage.setItem("userProfile", JSON.stringify(state.profile));
       }
     },
     setUserRole: (state, action: PayloadAction<string>) => {
       if (state.profile) {
         state.profile.role = action.payload;
+        // Update localStorage with new role
+        localStorage.setItem("userProfile", JSON.stringify(state.profile));
       }
     },
     addValidatedImage: (
@@ -82,7 +86,11 @@ const userSlice = createSlice({
         state.validatedImagesWrong.push(action.payload.image);
         if (state.profile) state.profile.validatedWrong += 1;
       }
-      if (state.profile) state.profile.imagesValidated += 1;
+      if (state.profile) {
+        state.profile.imagesValidated += 1;
+        // Update localStorage with updated profile stats
+        localStorage.setItem("userProfile", JSON.stringify(state.profile));
+      }
     },
     setPendingValidatedImages: (
       state,
@@ -114,6 +122,8 @@ const userSlice = createSlice({
         state.profile.validatedWrong = action.payload.validatedWrong;
         state.profile.imagesValidated =
           action.payload.validatedCorrect + action.payload.validatedWrong;
+        // Update localStorage with updated stats
+        localStorage.setItem("userProfile", JSON.stringify(state.profile));
       }
     },
     removePendingImage: (state, action: PayloadAction<string>) => {
@@ -143,8 +153,6 @@ const userSlice = createSlice({
       })
       .addCase(verifyUser.fulfilled, (state) => {
         state.loading = false;
-        // Do not set profile fields since profile may be null
-        // The server handles activation, and login will fetch updated profile
       })
       .addCase(verifyUser.rejected, (state, action) => {
         state.loading = false;
@@ -162,6 +170,9 @@ const userSlice = createSlice({
           ...action.payload.user,
           jwtoken: action.payload.token,
         };
+        // Persist user profile and token in localStorage
+        localStorage.setItem("userProfile", JSON.stringify(state.profile));
+        localStorage.setItem("isLoggedIn", "true");
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.loading = false;
@@ -174,14 +185,20 @@ const userSlice = createSlice({
       })
       .addCase(logoutUser.fulfilled, (state) => {
         state.loading = false;
-        if (state.profile) {
-          state.profile.jwtoken = "";
-          state.profile = null;
-        }
+        state.profile = null;
+        state.validatedImagesCorrect = [];
+        state.validatedImagesWrong = [];
+        state.validatedImagesPending = [];
+        // Clear localStorage on logout
+        localStorage.removeItem("userProfile");
+        localStorage.removeItem("isLoggedIn");
       })
       .addCase(logoutUser.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
+        // Clear localStorage even on logout failure to ensure clean state
+        localStorage.removeItem("userProfile");
+        localStorage.removeItem("isLoggedIn");
       })
       // Get User
       .addCase(getUser.pending, (state) => {
@@ -191,6 +208,8 @@ const userSlice = createSlice({
       .addCase(getUser.fulfilled, (state, action) => {
         state.loading = false;
         state.profile = { ...(state.profile || {}), ...action.payload };
+        // Update localStorage with fetched user data
+        localStorage.setItem("userProfile", JSON.stringify(state.profile));
       })
       .addCase(getUser.rejected, (state, action) => {
         state.loading = false;
@@ -204,6 +223,8 @@ const userSlice = createSlice({
       .addCase(updateUser.fulfilled, (state, action) => {
         state.loading = false;
         state.profile = { ...(state.profile || {}), ...action.payload };
+        // Update localStorage with updated user data
+        localStorage.setItem("userProfile", JSON.stringify(state.profile));
       })
       .addCase(updateUser.rejected, (state, action) => {
         state.loading = false;
