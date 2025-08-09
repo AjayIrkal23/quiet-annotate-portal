@@ -7,7 +7,7 @@ import {
 } from "../store/annotationSlice";
 import { nextImage, previousImage } from "../store/imageSlice";
 import { v4 as uuidv4 } from "uuid";
-import { BoundingBox, CurrentBox } from "@/types/annotationTypes";
+import { BoundingBox, CurrentBox, ViolationDetail } from "@/types/annotationTypes";
 import axios from "axios";
 import { BASEURL } from "@/lib/utils";
 import { fetchUniqueImages } from "./../store/thunks/fetchUniqueImages";
@@ -42,24 +42,31 @@ export function useAnnotationManager() {
   const imageId = currentImageData?._id || "";
   const boundingBoxes: BoundingBox[] = allAnnotations[imageId] || [];
 
+  // New: custom violations per image (session-only)
+  const [customViolations, setCustomViolations] = useState<Record<string, ViolationDetail[]>>({});
+
   // Calculate total annotated images
   const totalAnnotatedImages = Object.keys(allAnnotations).filter(
     (imageId) => allAnnotations[imageId] && allAnnotations[imageId].length > 0
   ).length;
+
+  // Extended violations for current image (base + custom)
+  const baseViolations = currentImageData?.violationDetails || [];
+  const extendedViolationDetails: ViolationDetail[] = currentImageData
+    ? [...baseViolations, ...(customViolations[imageId] || [])]
+    : [];
 
   // Get used violation names for current image
   const usedViolations = boundingBoxes?.map((box) => box?.violationName);
 
   // Check if all violations are annotated
   const allViolationsAnnotated = currentImageData
-    ? currentImageData?.violationDetails?.length === boundingBoxes?.length
+    ? extendedViolationDetails.length === boundingBoxes?.length
     : false;
 
   // Get available violations (not yet annotated)
   const availableViolations = currentImageData
-    ? currentImageData?.violationDetails?.filter(
-        (v) => !usedViolations?.includes(v.name)
-      )
+    ? extendedViolationDetails.filter((v) => !usedViolations?.includes(v.name))
     : [];
 
   const flushPendingBox = useCallback(() => {
@@ -196,12 +203,43 @@ export function useAnnotationManager() {
     setViolationDialogOpen(false);
   };
 
+  // Add a custom violation for the current image (session-only)
+  const addCustomViolation = (violation: ViolationDetail) => {
+    if (!imageId) return;
+    const existing = [
+      ...(customViolations[imageId] || []),
+      ...(currentImageData?.violationDetails || []),
+    ];
+    if (
+      existing.some(
+        (v) => v.name.trim().toLowerCase() === violation.name.trim().toLowerCase()
+      )
+    ) {
+      toast.error("Violation already exists for this image.", {
+        duration: 3000,
+        position: "top-right",
+        style: { background: "#1f2937", color: "#fff", border: "1px solid #374151" },
+      });
+      return;
+    }
+    setCustomViolations((prev) => ({
+      ...prev,
+      [imageId]: [...(prev[imageId] || []), violation],
+    }));
+  };
+
   const handleSubmitAnnotations = async () => {
     const allImageData = images
       .map((image) => {
-        const imageId = image._id;
+        const imageId = image._id as string;
         const annotations = allAnnotations[imageId] || [];
         if (annotations.length === 0) return null;
+
+        const extendedForImage: ViolationDetail[] = [
+          ...(image.violationDetails || []),
+          ...((customViolations[imageId] as ViolationDetail[] | undefined) || []),
+        ];
+
         return {
           employeeId,
           imageName: image.imageName,
@@ -211,7 +249,7 @@ export function useAnnotationManager() {
             height: imageHeight,
           },
           details: annotations.map((box) => {
-            const violation = image.violationDetails.find(
+            const violation = extendedForImage.find(
               (v) => v.name === box.violationName
             );
             return {
@@ -317,17 +355,23 @@ export function useAnnotationManager() {
     totalAnnotatedImages,
     allViolationsAnnotated,
     availableViolations,
+    // New exposed data
+    extendedViolationDetails,
+    // Mouse/touch handlers
     handleMouseDown,
     handleMouseMove,
     handleMouseUp,
     handleTouchStart,
     handleTouchMove,
     handleTouchEnd,
+    // Navigation & actions
     handleNextImage,
     handlePreviousImage,
     handleDeleteBoundingBox,
     handleSelectViolation,
     handleSubmitAnnotations,
     getSeverityColor,
+    // Add violation
+    addCustomViolation,
   };
 }

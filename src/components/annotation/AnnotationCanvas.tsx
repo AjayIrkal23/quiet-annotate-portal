@@ -1,10 +1,12 @@
 import React from "react";
-import { ChevronLeft, ChevronRight, Send, CheckCircle } from "lucide-react";
-import { ImageData, BoundingBox, CurrentBox } from "@/types/annotationTypes";
+import { ChevronLeft, ChevronRight, Send, CheckCircle, Plus } from "lucide-react";
+import { ImageData, BoundingBox, CurrentBox, ViolationDetail } from "@/types/annotationTypes";
 import { BASEURL } from "@/lib/utils";
 
 interface AnnotationCanvasProps {
   currentImageData: ImageData;
+  violationDetails: ViolationDetail[];
+  onAddViolationClick: () => void;
   currentImageIndex: number;
   totalImages: number;
   IMAGE_WIDTH: number;
@@ -26,6 +28,8 @@ interface AnnotationCanvasProps {
 
 const AnnotationCanvas: React.FC<AnnotationCanvasProps> = ({
   currentImageData,
+  violationDetails,
+  onAddViolationClick,
   currentImageIndex,
   totalImages,
   IMAGE_WIDTH,
@@ -91,14 +95,23 @@ const AnnotationCanvas: React.FC<AnnotationCanvasProps> = ({
           <h3 className="text-white font-medium mb-2">
             {currentImageData.imageName}
           </h3>
-          {allViolationsAnnotated && (
-            <div className="flex items-center space-x-2 text-green-400">
-              <CheckCircle className="w-5 h-5" />
-              <span className="text-sm font-medium">
-                All violations annotated
-              </span>
-            </div>
-          )}
+          <div className="flex items-center gap-3">
+            <button
+              onClick={onAddViolationClick}
+              className="flex items-center space-x-2 bg-gray-700 hover:bg-gray-600 text-white px-3 py-1.5 rounded-lg transition-all duration-200"
+            >
+              <Plus className="w-4 h-4" />
+              <span className="text-sm">Add Violation</span>
+            </button>
+            {allViolationsAnnotated && (
+              <div className="flex items-center space-x-2 text-green-400">
+                <CheckCircle className="w-5 h-5" />
+                <span className="text-sm font-medium">
+                  All violations annotated
+                </span>
+              </div>
+            )}
+          </div>
         </div>
         <p className="text-gray-400 text-sm">
           {allViolationsAnnotated
@@ -136,9 +149,7 @@ const AnnotationCanvas: React.FC<AnnotationCanvasProps> = ({
 
           {/* Render bounding boxes */}
           {boundingBoxes.map((box) => {
-            const violation = currentImageData.violationDetails.find(
-              (v) => v.name === box.violationName
-            );
+            const violation = violationDetails.find((v) => v.name === box.violationName);
             const color = violation
               ? getSeverityColor(violation.severity)
               : "#ef4444";

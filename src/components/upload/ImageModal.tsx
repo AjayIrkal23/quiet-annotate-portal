@@ -11,7 +11,7 @@ import { BASEURL } from "@/lib/utils";
 interface Violation {
   name: string;
   description: string;
-  severity: "high" | "medium" | "low";
+  severity: "critical" | "high" | "medium" | "low";
 }
 
 interface ImageData {

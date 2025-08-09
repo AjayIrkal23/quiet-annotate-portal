@@ -1,14 +1,16 @@
-import React from "react";
+import React, { useState } from "react";
 import { useAnnotationManager } from "@/hooks/useAnnotationManager";
 import AnnotationCanvas from "@/components/annotation/AnnotationCanvas";
 import AnnotationSidebar from "@/components/annotation/AnnotationSidebar";
 import ViolationDialog from "@/components/annotation/ViolationDialog";
+import AddViolationDialog from "@/components/annotation/AddViolationDialog";
 import { Loader2 } from "lucide-react"; // optional: any spinner icon
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
 
 const Annotation: React.FC = () => {
   const loading = useSelector((state: RootState) => state.image.loading);
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
   const {
     IMAGE_WIDTH,
     IMAGE_HEIGHT,
@@ -24,6 +26,7 @@ const Annotation: React.FC = () => {
     totalAnnotatedImages,
     allViolationsAnnotated,
     availableViolations,
+    extendedViolationDetails,
     handleMouseDown,
     handleMouseMove,
     handleMouseUp,
@@ -33,6 +36,7 @@ const Annotation: React.FC = () => {
     handleSelectViolation,
     handleSubmitAnnotations,
     getSeverityColor,
+    addCustomViolation,
   } = useAnnotationManager();
 
   if (loading) {
@@ -86,6 +90,7 @@ const Annotation: React.FC = () => {
         <div className="xl:w-80 w-full order-2 xl:order-1 mb-6 xl:mb-0">
           <AnnotationSidebar
             currentImageData={currentImageData}
+            violationDetails={extendedViolationDetails}
             boundingBoxes={boundingBoxes}
             onDeleteBoundingBox={handleDeleteBoundingBox}
             getSeverityColor={getSeverityColor}
@@ -96,6 +101,8 @@ const Annotation: React.FC = () => {
         <div className="flex-1 order-1 xl:order-2">
           <AnnotationCanvas
             currentImageData={currentImageData}
+            violationDetails={extendedViolationDetails}
+            onAddViolationClick={() => setAddDialogOpen(true)}
             currentImageIndex={currentImageIndex}
             totalImages={totalImages}
             IMAGE_WIDTH={IMAGE_WIDTH}
@@ -128,6 +135,16 @@ const Annotation: React.FC = () => {
         onSelectViolation={handleSelectViolation}
         violations={availableViolations}
         getSeverityColor={getSeverityColor}
+      />
+
+      {/* Add violation dialog */}
+      <AddViolationDialog
+        open={addDialogOpen}
+        onOpenChange={setAddDialogOpen}
+        onSubmit={(v) => {
+          addCustomViolation(v);
+          setAddDialogOpen(false);
+        }}
       />
     </div>
   );

@@ -8,6 +8,7 @@ import {
 
 interface AnnotationSidebarProps {
   currentImageData: ImageData;
+  violationDetails: ViolationDetail[];
   boundingBoxes: BoundingBox[];
   onDeleteBoundingBox: (id: string) => void;
   getSeverityColor: (severity: string) => string;
@@ -15,6 +16,7 @@ interface AnnotationSidebarProps {
 
 const AnnotationSidebar: React.FC<AnnotationSidebarProps> = ({
   currentImageData,
+  violationDetails,
   boundingBoxes,
   onDeleteBoundingBox,
   getSeverityColor,
@@ -42,10 +44,10 @@ const AnnotationSidebar: React.FC<AnnotationSidebarProps> = ({
       {/* Violation Details Section */}
       <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-4 border border-gray-700/50">
         <h3 className="text-lg font-bold text-white mb-4">
-          Violations to Annotate ({currentImageData?.violationDetails?.length})
+          Violations to Annotate ({violationDetails?.length})
         </h3>
         <div className="space-y-3">
-          {currentImageData?.violationDetails?.map((violation, index) => {
+          {violationDetails?.map((violation, index) => {
             const isAnnotated = isViolationAnnotated(violation?.name);
 
             return (
@@ -109,9 +111,7 @@ const AnnotationSidebar: React.FC<AnnotationSidebarProps> = ({
             </div>
           ) : (
             boundingBoxes.map((box) => {
-              const violation = currentImageData?.violationDetails?.find(
-                (v) => v?.name === box?.violationName
-              );
+              const violation = violationDetails?.find((v) => v?.name === box?.violationName);
               const color = violation
                 ? getSeverityColor(violation.severity)
                 : "#ef4444";

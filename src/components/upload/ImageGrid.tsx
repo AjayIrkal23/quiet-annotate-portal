@@ -29,7 +29,7 @@ const ImageGrid: React.FC<ImageGridProps> = ({
     <div className="space-y-4">
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {images.map((image) => (
-          <div key={image._id.$oid} className="relative">
+          <div key={(image._id as string) || image.imagePath || image.imageName} className="relative">
             <img
               src={image.imagePath}
               alt={image.imageName}

@@ -1,7 +1,7 @@
 export interface ViolationDetail {
   name: string;
   description: string;
-  severity: "high" | "medium" | "low";
+  severity: "critical" | "high" | "medium" | "low";
 }
 
 export interface ImageData {
