@@ -16,6 +16,10 @@ interface AnnotationCanvasProps {
   boundingBoxes: BoundingBox[];
   currentBox: CurrentBox | null;
   allViolationsAnnotated: boolean;
+  zoomActive: boolean;
+  setZoomActive: (active: boolean) => void;
+  lensPos: { x: number; y: number } | null;
+  setLensPos: (pos: { x: number; y: number } | null) => void;
   onMouseDown: (e: React.MouseEvent<HTMLCanvasElement>) => void;
   onMouseMove: (e: React.MouseEvent<HTMLCanvasElement>) => void;
   onMouseUp: (e: React.MouseEvent<HTMLCanvasElement>) => void;
@@ -39,6 +43,10 @@ const AnnotationCanvas: React.FC<AnnotationCanvasProps> = ({
   boundingBoxes,
   currentBox,
   allViolationsAnnotated,
+  zoomActive,
+  setZoomActive,
+  lensPos,
+  setLensPos,
   onMouseDown,
   onMouseMove,
   onMouseUp,
@@ -50,9 +58,7 @@ const AnnotationCanvas: React.FC<AnnotationCanvasProps> = ({
 }) => {
   const isLastImage = currentImageIndex === totalImages - 1;
 
-  // Zoom/magnifier state
-  const [zoomActive, setZoomActive] = useState(false);
-  const [lensPos, setLensPos] = useState<{ x: number; y: number } | null>(null);
+  // Zoom/magnifier constants
   const lensSize = 160;
   const zoomFactor = 2.2;
   const containerRef = useRef<HTMLDivElement>(null);
@@ -126,7 +132,7 @@ const AnnotationCanvas: React.FC<AnnotationCanvasProps> = ({
           <h3 className="text-white font-medium mb-2">{currentImageData.imageName}</h3>
           <div className="flex items-center gap-3 mt-1.5 ">
             <button
-              onClick={() => setZoomActive((z) => !z)}
+              onClick={() => setZoomActive(!zoomActive)}
               className={`flex items-center space-x-2 bg-gray-700 hover:bg-gray-600 text-white px-3 py-1.5 rounded-lg transition-all duration-200 ${
                 zoomActive ? "ring-2 ring-purple-500" : ""
               }`}

@@ -40,6 +40,11 @@ export function useAnnotationManager() {
   const [currentBox, setCurrentBox] = useState<CurrentBox | null>(null);
   const [pendingBox, setPendingBox] = useState<BoundingBox | null>(null);
   const [violationDialogOpen, setViolationDialogOpen] = useState(false);
+  
+  // Zoom/magnifier state
+  const [zoomActive, setZoomActive] = useState(false);
+  const [lensPos, setLensPos] = useState<{ x: number; y: number } | null>(null);
+  
   const imageRef = useRef<HTMLImageElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const currentImageData = images[currentImageIndex];
@@ -374,6 +379,11 @@ export function useAnnotationManager() {
     availableViolations,
     // New exposed data
     extendedViolationDetails,
+    // Zoom state
+    zoomActive,
+    setZoomActive,
+    lensPos,
+    setLensPos,
     // Mouse/touch handlers
     handleMouseDown,
     handleMouseMove,

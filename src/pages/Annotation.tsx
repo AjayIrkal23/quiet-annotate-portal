@@ -40,6 +40,10 @@ const Annotation: React.FC = () => {
     handleSubmitAnnotations,
     getSeverityColor,
     addCustomViolation,
+    zoomActive,
+    setZoomActive,
+    lensPos,
+    setLensPos,
   } = useAnnotationManager();
 
   // Show motivation popup every 10 images
@@ -124,6 +128,10 @@ const Annotation: React.FC = () => {
             boundingBoxes={boundingBoxes}
             currentBox={currentBox}
             allViolationsAnnotated={allViolationsAnnotated}
+            zoomActive={zoomActive}
+            setZoomActive={setZoomActive}
+            lensPos={lensPos}
+            setLensPos={setLensPos}
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
