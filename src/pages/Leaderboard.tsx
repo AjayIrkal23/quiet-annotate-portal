@@ -48,7 +48,10 @@ const Leaderboard: React.FC = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-6 flex items-center justify-center">
-        <p className="text-white text-lg">Loading leaderboard...</p>
+        <div className="flex flex-col items-center gap-4">
+          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-white"></div>
+          <p className="text-white text-lg">Loading leaderboard...</p>
+        </div>
       </div>
     );
   }
