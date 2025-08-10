@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useAnnotationManager } from "@/hooks/useAnnotationManager";
 import AnnotationCanvas from "@/components/annotation/AnnotationCanvas";
 import AnnotationSidebar from "@/components/annotation/AnnotationSidebar";
 import ViolationDialog from "@/components/annotation/ViolationDialog";
 import AddViolationDialog from "@/components/annotation/AddViolationDialog";
+import MotivationPopup from "@/components/annotation/MotivationPopup";
 import { Loader2 } from "lucide-react"; // optional: any spinner icon
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
@@ -11,6 +12,8 @@ import { RootState } from "@/store/store";
 const Annotation: React.FC = () => {
   const loading = useSelector((state: RootState) => state.image.loading);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [motivationPopupOpen, setMotivationPopupOpen] = useState(false);
+  const [lastMotivationIndex, setLastMotivationIndex] = useState(0);
   const {
     IMAGE_WIDTH,
     IMAGE_HEIGHT,
@@ -38,6 +41,15 @@ const Annotation: React.FC = () => {
     getSeverityColor,
     addCustomViolation,
   } = useAnnotationManager();
+
+  // Show motivation popup every 10 images
+  useEffect(() => {
+    const completedImages = currentImageIndex + 1;
+    if (completedImages > 0 && completedImages % 10 === 0 && completedImages !== lastMotivationIndex) {
+      setMotivationPopupOpen(true);
+      setLastMotivationIndex(completedImages);
+    }
+  }, [currentImageIndex, lastMotivationIndex]);
 
   if (loading) {
     return (
@@ -145,6 +157,13 @@ const Annotation: React.FC = () => {
           addCustomViolation(v);
           setAddDialogOpen(false);
         }}
+      />
+
+      {/* Motivation popup */}
+      <MotivationPopup
+        open={motivationPopupOpen}
+        onClose={() => setMotivationPopupOpen(false)}
+        imageCount={currentImageIndex + 1}
       />
     </div>
   );
