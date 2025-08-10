@@ -1,7 +1,7 @@
 import React, { useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { Home, Upload, Image, Trophy, User, LogOut, ShieldCheck } from "lucide-react";
+import { Home, Upload, Image, Trophy, User, Users, LogOut, ShieldCheck } from "lucide-react";
 import { createPortal } from "react-dom";
 import { AppDispatch, RootState } from "../../store/store";
 import { logoutUser } from "@/store/thunks/userThunks";
@@ -37,6 +37,7 @@ const allNavItems = [
   { path: "/", icon: Home, label: "Dashboard", roles: ["admin"] },
   { path: "/upload", icon: Upload, label: "Upload", roles: ["admin"] },
   { path: "/validation", icon: ShieldCheck, label: "Violation Validation", roles: ["admin"] },
+  { path: "/admin/users", icon: Users, label: "User Management", roles: ["admin"] },
   {
     path: "/annotation",
     icon: Image,

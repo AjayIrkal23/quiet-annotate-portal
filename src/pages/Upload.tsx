@@ -16,11 +16,8 @@ import ImageModal from "@/components/upload/ImageModal";
 import { UploadedImage } from "@/store/uploadSlice";
 
 const Upload = () => {
-  const [selectedImage, setSelectedImage] = useState<UploadedImage | null>(
-    null
-  );
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [showImageModal, setShowImageModal] = useState(false);
-
   const [page, setPage] = useState(1);
   const limit = 30;
 
@@ -71,14 +68,25 @@ const Upload = () => {
     return () => clearInterval(interval);
   }, [dispatch, page, limit]);
 
-  const handleImageClick = (image: UploadedImage) => {
-    setSelectedImage(image);
-    setShowImageModal(true);
-  };
+const handleImageClick = (image: UploadedImage) => {
+  const idx = uploadedImages.findIndex((img) => img._id === image._id);
+  setSelectedIndex(idx >= 0 ? idx : null);
+  setShowImageModal(true);
+};
 
-  const totalPages = Math.ceil(imageCount / limit);
+const totalPages = Math.ceil(imageCount / limit);
+const currentImage = selectedIndex !== null ? uploadedImages[selectedIndex] : null;
+const hasPrevious = selectedIndex !== null && selectedIndex > 0;
+const hasNext = selectedIndex !== null && selectedIndex < uploadedImages.length - 1;
 
-  return (
+const handleNextInModal = () => {
+  if (hasNext) setSelectedIndex((prev) => (prev as number) + 1);
+};
+const handlePreviousInModal = () => {
+  if (hasPrevious) setSelectedIndex((prev) => (prev as number) - 1);
+};
+
+return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-6">
       {/* Header */}
       <div className="mb-8 animate-fade-in">
@@ -191,11 +199,19 @@ const Upload = () => {
       </div>
 
       {/* Modal */}
-      <ImageModal
-        open={showImageModal}
-        onClose={() => setShowImageModal(false)}
-        image={selectedImage}
-      />
+<ImageModal
+  open={showImageModal}
+  onClose={() => setShowImageModal(false)}
+  image={currentImage}
+  onNext={handleNextInModal}
+  onPrevious={handlePreviousInModal}
+  hasNext={hasNext}
+  hasPrevious={hasPrevious}
+  onSaved={() => {
+    dispatch<any>(fetchImageStats());
+    dispatch<any>(fetchPaginatedImages({ page, limit }));
+  }}
+/>
     </div>
   );
 };
