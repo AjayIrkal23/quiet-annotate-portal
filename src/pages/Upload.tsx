@@ -61,12 +61,15 @@ const Upload = () => {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      dispatch<any>(fetchImageStats());
-      dispatch<any>(fetchPaginatedImages({ page, limit }));
+      // Don't refresh if modal is open
+      if (!showImageModal) {
+        dispatch<any>(fetchImageStats());
+        dispatch<any>(fetchPaginatedImages({ page, limit }));
+      }
     }, 8000);
 
     return () => clearInterval(interval);
-  }, [dispatch, page, limit]);
+  }, [dispatch, page, limit, showImageModal]);
 
 const handleImageClick = (image: UploadedImage) => {
   const idx = uploadedImages.findIndex((img) => img._id === image._id);
