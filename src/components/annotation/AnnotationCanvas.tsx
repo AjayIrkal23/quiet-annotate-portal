@@ -66,8 +66,8 @@ const AnnotationCanvas: React.FC<AnnotationCanvasProps> = ({
   const handleWrapperMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!zoomActive || !containerRef.current) return;
     const rect = containerRef.current.getBoundingClientRect();
-    const x = Math.max(0, Math.min(e.clientX - rect.left, IMAGE_WIDTH));
-    const y = Math.max(0, Math.min(e.clientY - rect.top, IMAGE_HEIGHT));
+    const x = Math.max(lensSize / 2, Math.min(e.clientX - rect.left, IMAGE_WIDTH - lensSize / 2));
+    const y = Math.max(lensSize / 2, Math.min(e.clientY - rect.top, IMAGE_HEIGHT - lensSize / 2));
     setLensPos({ x, y });
   };
   const handleWrapperMouseLeave = () => {
@@ -243,7 +243,7 @@ const AnnotationCanvas: React.FC<AnnotationCanvasProps> = ({
           {/* Zoom lens */}
           {zoomActive && lensPos && (
             <div
-              className="absolute rounded-full pointer-events-none shadow-2xl"
+              className="absolute rounded-full pointer-events-none shadow-2xl ring-2 ring-white/50"
               style={{
                 width: lensSize,
                 height: lensSize,
@@ -252,8 +252,9 @@ const AnnotationCanvas: React.FC<AnnotationCanvasProps> = ({
                 backgroundImage: `url(${BASEURL}/${currentImageData.imagePath})`,
                 backgroundRepeat: "no-repeat",
                 backgroundSize: `${IMAGE_WIDTH * zoomFactor}px ${IMAGE_HEIGHT * zoomFactor}px`,
-                backgroundPosition: `-${lensPos.x * zoomFactor - lensSize / 2}px -${lensPos.y * zoomFactor - lensSize / 2}px`,
-                border: "2px solid rgba(255,255,255,0.5)",
+                backgroundPosition: `-${(lensPos.x - lensSize / 2) * zoomFactor}px -${(lensPos.y - lensSize / 2) * zoomFactor}px`,
+                border: "3px solid #ffffff",
+                zIndex: 1000,
               }}
             />
           )}
