@@ -12,7 +12,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Trophy } from "lucide-react";
-import confetti from "canvas-confetti";
 
 const CurrentRankCard: React.FC<{ name: string; rank: number }> = ({
   name,
@@ -60,20 +59,12 @@ const Leaderboard: React.FC = () => {
         if (rank <= 3) {
           setTimeout(() => {
             setShowCongrats(true);
-            triggerConfetti();
           }, 800);
         }
       }
     }
   }, [loading, entries, currentUserName]);
 
-  const triggerConfetti = () => {
-    confetti({
-      particleCount: 150,
-      spread: 70,
-      origin: { y: 0.6 },
-    });
-  };
 
   if (loading) {
     return (
